@@ -9,7 +9,7 @@ runs/
 *.csv
 *.jpg
 *.png
-*.obg
+*.obj
 analysis_data/
 temp/
 **/*.pickle
