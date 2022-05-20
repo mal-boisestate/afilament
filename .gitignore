@@ -9,6 +9,9 @@ runs/
 *.csv
 *.jpg
 *.png
+*.obg
+analysis_data/
+temp/
 **/*.pickle
 **/*.pth
 **/*.jpg

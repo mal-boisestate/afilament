@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 
 import cv2.cv2 as cv2
@@ -80,4 +81,10 @@ class SingleFiber(object):
         actin_xsection = np.mean([cv2.contourArea(cnt) for cnt in self.cnts]) * resolution.y * resolution.z
         actin_volume = actin_length * actin_xsection
 
-        return [actin_length, actin_xsection, actin_volume, self.n]
+        adjacent = (self.xs[-1] - self.xs[0])
+        if adjacent == 0:
+            adjacent =1
+
+        slope = math.degrees(math.tan((self.ys[-1] - self.ys[0]) / adjacent))
+
+        return [actin_length, actin_xsection, actin_volume, self.n, slope]

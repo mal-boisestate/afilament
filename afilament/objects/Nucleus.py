@@ -1,6 +1,7 @@
 import os
 import cv2.cv2 as cv2
 import numpy as np
+from pathlib import Path
 
 from afilament.objects import Utils
 from unet.predict import run_predict_unet
@@ -20,7 +21,7 @@ class Nucleus(object):
         self.nuc_3D = None
         self.point_cloud = None
 
-    def reconstruct(self, rot_angle, cnt_extremes, folders, unet_parm, resolution):
+    def reconstruct(self, rot_angle, cnt_extremes, temp_folders, unet_parm, resolution, analysis_folder):
         """
         Reconstruct nucleus and saves all stat info into this Nicleus objects
         ---
@@ -32,27 +33,21 @@ class Nucleus(object):
         img_resolution (ImgResolution object):
         """
         print("\nFinding nuclei...")
-        if len(os.listdir(folders["cut_out_nuc"])) == 0:
-            raise ValueError(f"Can not reconstruct nucleus, the directory {folders['cut_out_nuc']} that should "
+        if len(os.listdir(temp_folders["cut_out_nuc"])) == 0:
+            raise ValueError(f"Can not reconstruct nucleus, the directory {temp_folders['cut_out_nuc']} that should "
                              f"include preprocessed images is empty")
-        nucleus_3d_img, _ = Utils.rotate_and_get_3D(folders["cut_out_nuc"], 'nucleus', rot_angle)
-        Utils.get_yz_xsection(nucleus_3d_img, folders["nucleous_xsection"], 'nucleus', cnt_extremes)
-        run_predict_unet(folders["nucleous_xsection"], folders["nucleus_mask"], unet_parm.nucleus_unet_model,
+        nucleus_3d_img, _ = Utils.rotate_and_get_3D(temp_folders["cut_out_nuc"], 'nucleus', rot_angle)
+        Utils.get_yz_xsection(nucleus_3d_img, temp_folders["nucleous_xsection"], 'nucleus', cnt_extremes)
+        run_predict_unet(temp_folders["nucleous_xsection"], temp_folders["nucleus_mask"], unet_parm.nucleus_unet_model,
                          unet_parm.unet_model_scale,
                          unet_parm.unet_model_thrh)
-        self.nuc_3D = Utils.get_3d_img(folders["nucleus_mask"])
-        volume, self.point_cloud = self.nucleus_reco_3d(resolution)
-        length = (cnt_extremes.right[0] - cnt_extremes.left[0]) * resolution.x
-        width = (cnt_extremes.bottom[1] - cnt_extremes.top[1]) * resolution.y
-        self.nuc_volume = volume
-        self.nuc_length = length
-        self.nuc_width = width
-        self.nuc_high = None
+        self.nuc_3D = Utils.get_3d_img(temp_folders["nucleus_mask"])
+        self.nuc_volume, self.point_cloud, self.nuc_high = self.nucleus_reco_3d(resolution, analysis_folder)
+        self.nuc_length = (cnt_extremes.right[0] - cnt_extremes.left[0]) * resolution.x
+        self.nuc_width = (cnt_extremes.bottom[1] - cnt_extremes.top[1]) * resolution.y
 
-    def nucleus_reco_3d(self, resolution):
+    def nucleus_reco_3d(self, resolution, analysis_folder):
         points = []
-        center_x, center_y, center_z = self.get_nucleus_origin()
-        print(center_x, center_y, center_z)
 
         xdata, ydata, zdata = [], [], []
         volume = 0
@@ -77,18 +72,23 @@ class Nucleus(object):
                 cnt_ys = slice_cnt[:, 0, 1]
                 cnt_zs = slice_cnt[:, 0, 0]
 
-                points.extend([[x - center_x, y - center_y, center_z - z] for x, y, z in
+                points.extend([[x, y, z] for x, y, z in
                                zip([slice] * len(cnt_ys), cnt_ys, cnt_zs)])
+                path = os.path.join(analysis_folder, 'nucleus_points_coordinates.csv')
 
-        np.savetxt("nucleus_points_coordinates.csv", np.array(points, dtype=int), delimiter=",", fmt="%10.0f")
+        np.savetxt(path, np.array(points, dtype=int), delimiter=",", fmt="%10.0f")
 
         print("Nucleus volume: {}".format(volume))
+        nuc_high = (max(zdata) - min(zdata)) * resolution.z
+        print(f"Nuc middle coordinate is {nuc_high}")
+        print(f"Nuc hights is {nuc_high}")
+
 
         # TODO: to print out nucleus data commented this out
         # ax = plt.axes(projection='3d')
         # ax.scatter3D(ydata, zdata, xdata, cmap='Greens', alpha=0.5)
         # plt.show()
-        return volume, points
+        return volume, points, nuc_high
 
     def get_nucleus_origin(self):
         """

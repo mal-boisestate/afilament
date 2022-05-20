@@ -1,11 +1,15 @@
 import csv
 import cv2.cv2 as cv2
 import numpy as np
+import matplotlib.pyplot as plt
+import math
+import statistics
 
 from afilament.objects import Utils
 from unet.predict import run_predict_unet
 from afilament.objects import Contour
 from afilament.objects.SingleFiber import SingleFiber
+from afilament.objects.Node import Node
 
 
 class ActinContour(object):
@@ -26,6 +30,7 @@ class Fibers(object):
         self.total_length = None
         self.total_num = None
         self.fibers_list = None
+        self.slope_variance = None
 
     def get_actin_cnt_objs(self, xsection, x):
         cnts = cv2.findContours(xsection, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
@@ -160,10 +165,31 @@ class Fibers(object):
 
         return rotated_max_projection, mid_cut_img
 
+    def plot(self):
+        ax = plt.axes(projection='3d')
+        # ax = plt.axes()  #for 2D testing
+        for fiber in self.fibers_list:
+            if len(np.unique(fiber.zs)) < 1:
+                continue
+
+            # Draw only center points
+            xdata = fiber.xs
+            ydata = fiber.ys
+            zdata = fiber.zs
+            color_x = 1.0 * np.random.randint(255) / 255
+            color_y = 1.0 * np.random.randint(255) / 255
+            color_z = 1.0 * np.random.randint(255) / 255
+            if xdata:
+                ax.scatter3D(xdata, ydata, zdata, c=[[color_x, color_y, color_z]] * len(xdata), cmap='Greens')
+
+        plt.show()
+
+
     def _add_aggregated_fibers_stat(self, resolution):
         total_volume = 0
         total_actin_length = 0
         total_num = 0
+        slopes = []
         for i, fiber in enumerate(self.fibers_list):
             actin_length = (fiber.xs[-1] - fiber.xs[0]) * resolution.x
             actin_xsection = np.mean([cv2.contourArea(cnt) for cnt in fiber.cnts]) * resolution.y * resolution.z
@@ -171,17 +197,25 @@ class Fibers(object):
             total_actin_length = total_actin_length + actin_length
             total_volume = total_volume + actin_volume
             total_num = total_num + 1
+            if fiber.xs[-1] - fiber.xs[0] == 0:
+                slope = math.degrees(math.tan((fiber.ys[-1] - fiber.ys[0]) / 1))
+            else:
+                slope = math.degrees(math.tan((fiber.ys[-1] - fiber.ys[0]) / (fiber.xs[-1] - fiber.xs[0])))
+            slopes.append(slope)
 
+        self.slope_variance = statistics.variance(slopes)
         self.total_volume = total_volume
         self.total_length = total_actin_length
         self.total_num = total_num
 
     def save_each_fiber_stat(self, resolution, file_path):
-        header_row = ["ID", "Actin Length", "Actin Xsection", "Actin Volume", "Number of fiber layers"]
+        header_row = ["ID", "Actin Length", "Actin Xsection", "Actin Volume", "Number of fiber layers", "Slope"]
         with open(file_path, mode='w') as stat_file:
             csv_writer = csv.writer(stat_file, delimiter=',')
             csv_writer.writerow(header_row)
 
             for fiber_id, fiber in enumerate(self.fibers_list):
                 csv_writer.writerow([str(fiber_id)] + fiber.get_stat(resolution))
+
+
 

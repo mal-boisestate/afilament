@@ -1,6 +1,7 @@
 class UnetParam(object):
 
-    def __init__(self, nucleus_unet_model, actin_unet_model, unet_model_scale, unet_model_thrh, unet_img_size):
+    def __init__(self, from_top_nucleus_unet_model, nucleus_unet_model, actin_unet_model, unet_model_scale, unet_model_thrh, unet_img_size):
+        self.from_top_nucleus_unet_model = from_top_nucleus_unet_model
         self.nucleus_unet_model = nucleus_unet_model
         self.actin_unet_model = actin_unet_model
         self.unet_model_scale = unet_model_scale

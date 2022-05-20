@@ -3,6 +3,12 @@ import os
 import cv2.cv2 as cv2
 import numpy as np
 from afilament.objects import Contour
+from afilament.objects.ConfocalImgReader import ConfocalImgReaderCzi
+import numpy as np
+import skimage.color
+import skimage.io
+import matplotlib.pyplot as plt
+from unet.predict import run_predict_unet
 
 
 def prepare_folder(folder):
@@ -72,7 +78,7 @@ def find_rotation_angle(input_folder, rotation_trh=50):
         # cv2.imshow("output", cv2.resize(max_progection,(1000, 1000))) #keep it for debugging
         # cv2.waitKey()
 
-    return rot_angle, max_progection_img, hough_lines_img
+    return -rot_angle, max_progection_img, hough_lines_img
 
 
 def rotate_bound(image, angle):
@@ -226,7 +232,7 @@ def save_rotation_verification(cell, max_progection_img, hough_lines_img, rotate
     cv2.imwrite(middle_xsection_file_path, mid_cut_img)
 
 
-def find_biggest_nucleus_layer(folder, treshold):
+def find_biggest_nucleus_layer(temp_folders, treshold, find_biggest_mode, unet_parm=None):
     """
     Finds and analyzes image (layer) with the biggest area of the nucleus
     ---
@@ -241,8 +247,18 @@ def find_biggest_nucleus_layer(folder, treshold):
     """
     nucleus_area = 0
     mask, center = None, None
+
+    if find_biggest_mode == "unet":
+        run_predict_unet(temp_folders["raw"], temp_folders["nucleus_top_mask"], unet_parm.from_top_nucleus_unet_model,
+                         unet_parm.unet_model_scale,
+                         unet_parm.unet_model_thrh)
+        folder = temp_folders["nucleus_top_mask"]
+    elif find_biggest_mode == "trh":
+        folder = temp_folders["raw"]
+
     for img_path in glob.glob(os.path.join(folder, "*_nucleus_*.png")):
         nucleus_img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+
         current_nucleus_cnt = Contour.get_biggest_cnt(nucleus_img, treshold)
         if current_nucleus_cnt is None:
             continue
@@ -253,7 +269,7 @@ def find_biggest_nucleus_layer(folder, treshold):
     return mask
 
 
-def сut_out_mask(mask, input_folder, output_folder, identifier):
+def cut_out_mask(mask, input_folder, output_folder, identifier):
     """
     Cuts out an area that corresponds to the mask on each image (layer) located in the input_folder,
     saves processed images in the output_folder, and returns processed images combined into image_3d
@@ -280,3 +296,18 @@ def сut_out_mask(mask, input_folder, output_folder, identifier):
     image_3d = np.asarray([img for img, layer in object_layers], dtype=np.uint8)
     image_3d = np.moveaxis(image_3d, 0, -1)
     return image_3d
+
+def plot_histogram(title, image):
+    histogram, bin_edges = np.histogram(image, bins=256*256)
+    plt.figure()
+    plt.title(title)
+    plt.xlabel("grayscale value")
+    plt.ylabel("pixel count")
+
+    plt.plot(histogram)  # <- or here
+    plt.show()
+
+
+
+
+
