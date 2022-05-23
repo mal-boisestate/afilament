@@ -269,7 +269,7 @@ def find_biggest_nucleus_layer(temp_folders, treshold, find_biggest_mode, unet_p
     return mask
 
 
-def cut_out_mask(mask, input_folder, output_folder, identifier):
+def сut_out_mask(mask, input_folder, output_folder, identifier):
     """
     Cuts out an area that corresponds to the mask on each image (layer) located in the input_folder,
     saves processed images in the output_folder, and returns processed images combined into image_3d
