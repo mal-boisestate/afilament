@@ -4,17 +4,19 @@ import pickle
 from afilament.objects.CellAnalyser import CellAnalyser
 from afilament.objects import Utils
 from afilament.objects.Parameters import UnetParam, ImgResolution
+from pathlib import Path
 
 
 
 
 def main():
     RECALCULATE = True
-    cell_nums = [2]
+    cell_nums = [0]
     # 2 nuc thershold 30 does not work
-    nucleus_channel = 0  # 1 for original czi file
-    actin_channel = 1  # 0 for original czi file
-    confocal_img_folder = r"D:\BioLab\img\2022.05.10_DAPI_488"
+    nucleus_channel = 1  # 1 for original czi file
+    actin_channel = 0  # 0 for original czi file
+    confocal_img = r"C:\Users\nnina\Desktop\imagies" # Path to folder(czi) or file (lif)
+    # confocal_img = r"D:\BioLab\img\Confocal_img\3D_new_set\2022.01.12_KASH_dox.lif" # Path to folder(czi) or file (lif)
     nuc_theshold = 30
     fiber_min_layers_theshold = 10 #in pixels
     node_actin_len_th = 2 #for node creation, do not breake actin if one of the part is too small
@@ -29,17 +31,13 @@ def main():
     is_plot_fibers = True
     is_plot_nodes = True
     is_auto_normalized = False
-    norm_trh = None #when auto chose it will be recalculated
-    find_biggest_mode = "unet" #"unet" or "trh"
+    norm_th = 5000 #when auto chose it will be recalculated format is tuple example (1000, 1000)
+    find_biggest_mode = "trh" #"unet" or "trh"
 
 
-    scale_x = 0.103  # 0.05882
-    scale_y = 0.103  # 0.05882
-    scale_z = 0.330  # 0.270
-    img_resolution = ImgResolution(scale_x, scale_y, scale_z)
-    analyser = CellAnalyser(nucleus_channel, actin_channel, confocal_img_folder, nuc_theshold, unet_parm,
-                            img_resolution, fiber_min_layers_theshold, node_actin_len_th,
-                            is_plot_fibers, is_plot_nodes, is_auto_normalized, cell_nums, norm_trh, find_biggest_mode)
+    analyser = CellAnalyser(nucleus_channel, actin_channel, confocal_img, nuc_theshold, unet_parm,
+                            fiber_min_layers_theshold, node_actin_len_th, is_plot_fibers, is_plot_nodes,
+                            is_auto_normalized, cell_nums, norm_th, find_biggest_mode)
 
     start = time.time()
     cells = []

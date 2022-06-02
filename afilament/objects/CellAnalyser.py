@@ -3,7 +3,7 @@ import os
 import csv
 from pathlib import Path
 from afilament.objects import Utils
-from afilament.objects.ConfocalImgReader import ConfocalImgReaderCzi
+from afilament.objects.ConfocalImgReader import ConfocalImgReaderCzi, ConfocalImgReader
 from afilament.objects import Contour
 from afilament.objects.Cell import Cell
 
@@ -29,24 +29,21 @@ analysis_data_folders = {
 
 class CellAnalyser(object):
     def __init__(self, nucleus_channel, actin_channel, confocal_path,
-                 nuc_theshold, unet_parm, img_resolution,
-                 fiber_min_layers_theshold, node_actin_len_th,
-                 is_plot_fibers, is_plot_nodes, is_auto_normalize=False, cell_nums=None, norm_trh=None, find_biggest_mode="trh"):
+                 nuc_theshold, unet_parm, fiber_min_layers_theshold, node_actin_len_th,
+                 is_plot_fibers, is_plot_nodes, is_auto_normalize=False,
+                 cell_nums=None, norm_th=None, find_biggest_mode="trh"):
         self.nucleus_channel = nucleus_channel
         self.actin_channel = actin_channel
         self.confocal_path = confocal_path
         self.nuc_theshold = nuc_theshold
         self.unet_parm = unet_parm
-        self.img_resolution = img_resolution
         self.fiber_min_layers_theshold = fiber_min_layers_theshold
         self.node_actin_len_th = node_actin_len_th
         self.is_plot_fibers = is_plot_fibers
         self.is_plot_nodes = is_plot_nodes
-        self.norm_trh = norm_trh
-        self.reader = ConfocalImgReaderCzi(confocal_path, nucleus_channel, actin_channel)
-        self.find_biggest_mode = find_biggest_mode
-        if is_auto_normalize:
-            self.norm_trh = self.reader.find_norm_thr(cell_nums)
+        self.norm_th = norm_th
+        self.find_biggest_mode = find_biggest_mode #"unet" for U-Net mode or "trh" for trh mode
+        self.img_resolution = None
 
 
     def analyze_cell(self, cell_num, cap=True, bottom=True):
@@ -97,8 +94,10 @@ class CellAnalyser(object):
         print(f"\n Analyse {part} fibers of the cell # {cell.number}")
         # Step 1: Read confocal microscope image, save images in png 8 bit. Since there are
         # computational power limitations our Unet works only with 8-bit images.
+        reader = ConfocalImgReader(self.confocal_path, self.nucleus_channel, self.actin_channel, cell.number, self.norm_th)
+        self.img_resolution = reader.img_resolution
+        reader.read(temp_folders["raw"], part)
 
-        self.reader.read(temp_folders["raw"], cell.number, self.norm_trh, part)
 
         print("\nGenerate xsection images...")
         # Step 2: Go through all confocal image slices and find a slice with the biggest nucleus area.
@@ -133,7 +132,7 @@ class CellAnalyser(object):
         if part == "cap" or part == "bottom":
             Utils.prepare_folder(temp_folders["raw"])
             Utils.prepare_folder(temp_folders["cut_out_nuc"])
-            self.reader.read(temp_folders["raw"], cell.number, self.norm_trh, "whole")
+            reader.read(temp_folders["raw"], self.norm_trh, "whole")
             Utils.сut_out_mask(biggest_nucleus_mask, temp_folders["raw"], temp_folders["cut_out_nuc"], 'actin')
             length = (rotated_cnt_extremes.right[0] - rotated_cnt_extremes.left[0]) * self.img_resolution.x
         rotated_max_projection, mid_cut_img = cell.analyze_actin_fibers(rot_angle, rotated_cnt_extremes, temp_folders,
@@ -142,7 +141,7 @@ class CellAnalyser(object):
         cell.find_branching(part, self.node_actin_len_th, self.is_plot_nodes)
         Utils.save_rotation_verification(cell, max_progection_img, hough_lines_img, rotated_max_projection, mid_cut_img,
                                          part, analysis_data_folders)
-
+        reader.close()
         return biggest_nucleus_mask
 
     def save_cells_data(self, cells):
