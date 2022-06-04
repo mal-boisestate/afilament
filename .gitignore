@@ -10,6 +10,7 @@ runs/
 *.jpg
 *.png
 *.obj
+*.stl
 analysis_data/
 temp/
 **/*.pickle
@@ -21,4 +22,5 @@ temp/
 **/*.aux
 SUBMISSION*
 venv/
+
 
