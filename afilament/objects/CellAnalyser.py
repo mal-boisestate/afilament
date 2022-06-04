@@ -132,7 +132,7 @@ class CellAnalyser(object):
         if part == "cap" or part == "bottom":
             Utils.prepare_folder(temp_folders["raw"])
             Utils.prepare_folder(temp_folders["cut_out_nuc"])
-            reader.read(temp_folders["raw"], self.norm_trh, "whole")
+            reader.read(temp_folders["raw"], "whole")
             Utils.сut_out_mask(biggest_nucleus_mask, temp_folders["raw"], temp_folders["cut_out_nuc"], 'actin')
             length = (rotated_cnt_extremes.right[0] - rotated_cnt_extremes.left[0]) * self.img_resolution.x
         rotated_max_projection, mid_cut_img = cell.analyze_actin_fibers(rot_angle, rotated_cnt_extremes, temp_folders,

@@ -35,7 +35,6 @@ class ConfocalImgReaderCzi(object):
             nucleus_channel(int): channel of nucleus images at the provided microscopic image
             actin_channel(int): channel of actin images at the provided microscopic image
         """
-        javabridge.start_vm(class_path=bioformats.JARS) #To use bioformats
         self.folder_path = folder_path
         self.img_name = None
         self.nuclei_channel = nucleus_channel
@@ -147,7 +146,6 @@ class ConfocalImgReader(object):
             nucleus_channel(int): channel of nucleus images at the provided microscopic image
             actin_channel(int): channel of actin images at the provided microscopic image
         """
-        javabridge.start_vm(class_path=bioformats.JARS)
         self.image_path, self.series = self.get_img_path_and_series(path, cell_number)
         self.actin_channel = actin_channel
         self.nuc_channel = nucleus_channel
@@ -224,11 +222,11 @@ class ConfocalImgReader(object):
         nucleus_img_stack = self._get_img_stack(bio_structure="nucleus")
         actin_img_stack = self._get_img_stack(bio_structure="actin")
         if part == "cap":
-            nucleus_img_stack = nucleus_img_stack[:, :, 0:edge]
-            actin_img_stack = actin_img_stack[:, :, 0:edge]
+            nucleus_img_stack = nucleus_img_stack[0:edge]
+            actin_img_stack = actin_img_stack[0:edge]
         elif part == "bottom":
-            nucleus_img_stack = nucleus_img_stack[:, :, edge:z_layers_num-1]
-            actin_img_stack = actin_img_stack[:, :, edge:z_layers_num-1]
+            nucleus_img_stack = nucleus_img_stack[edge:z_layers_num-1]
+            actin_img_stack = actin_img_stack[edge:z_layers_num-1]
         self._save_img(nucleus_img_stack, "nucleus", output_folder)
         self._save_img(actin_img_stack, "actin", output_folder)
 
@@ -258,7 +256,6 @@ class ConfocalImgReader(object):
 
     def close(self):
         bioformats.clear_image_reader_cache()
-        javabridge.kill_vm()
 
     def normalization(self, img, type):
         img[np.where(img > self.norm_th)] = self.norm_th

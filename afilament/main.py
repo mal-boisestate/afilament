@@ -5,18 +5,21 @@ from afilament.objects.CellAnalyser import CellAnalyser
 from afilament.objects import Utils
 from afilament.objects.Parameters import UnetParam, ImgResolution
 from pathlib import Path
+import javabridge
+import bioformats
+import logging
+
 
 
 
 
 def main():
     RECALCULATE = True
-    cell_nums = [0]
+    cell_nums = [i for i in range(20)]
     # 2 nuc thershold 30 does not work
-    nucleus_channel = 1  # 1 for original czi file
-    actin_channel = 0  # 0 for original czi file
-    confocal_img = r"C:\Users\nnina\Desktop\imagies" # Path to folder(czi) or file (lif)
-    # confocal_img = r"D:\BioLab\img\Confocal_img\3D_new_set\2022.01.12_KASH_dox.lif" # Path to folder(czi) or file (lif)
+    nucleus_channel = 0  # 1 for original czi file
+    actin_channel = 1  # 0 for original czi file
+    confocal_img = r"D:\BioLab\img\Confocal_img\2022.05.25_leica_DAPI_488\2022.05.25_MSC_Control_Series-01-20.lif" # Path to folder(czi) or file (lif)
     nuc_theshold = 30
     fiber_min_layers_theshold = 10 #in pixels
     node_actin_len_th = 2 #for node creation, do not breake actin if one of the part is too small
@@ -28,12 +31,12 @@ def main():
     unet_img_size = (512, 512)
     unet_model_thrh = 0.5
     unet_parm = UnetParam(from_top_nucleus_unet_model, nucleus_unet_model, actin_unet_model, unet_model_scale, unet_model_thrh, unet_img_size)
-    is_plot_fibers = True
-    is_plot_nodes = True
+    is_plot_fibers = False
+    is_plot_nodes = False
     is_auto_normalized = False
-    norm_th = 5000 #when auto chose it will be recalculated format is tuple example (1000, 1000)
-    find_biggest_mode = "trh" #"unet" or "trh"
-
+    norm_th = 2**16 #when auto chose it will be recalculated format is tuple example (1000, 1000)
+    find_biggest_mode = "unet" #"unet" or "trh"
+    javabridge.start_vm(class_path=bioformats.JARS)
 
     analyser = CellAnalyser(nucleus_channel, actin_channel, confocal_img, nuc_theshold, unet_parm,
                             fiber_min_layers_theshold, node_actin_len_th, is_plot_fibers, is_plot_nodes,
@@ -41,10 +44,25 @@ def main():
 
     start = time.time()
     cells = []
+
+    logging.basicConfig(filename='myapp.log', level=logging.DEBUG,
+                        format='%(asctime)s %(levelname)s %(name)s %(message)s')
+    logger = logging.getLogger(__name__)
+
     if RECALCULATE:
         for cell_num in cell_nums:
-            cell = analyser.analyze_cell(cell_num, cap=True, bottom=True)
-            cells.append(cell)
+
+            # cell = analyser.analyze_cell(cell_num, cap=True, bottom=True)
+            # cells.append(cell)
+
+            try:
+                cell = analyser.analyze_cell(cell_num, cap=True, bottom=True)
+                cells.append(cell)
+            except Exception as e:
+                logger.error(f"\n----------- \n Cell #{cell_num} from file {confocal_img} was not analysed. "
+                             f"\n Error: {e} \n----------- \n")
+                print("An exception occurred")
+
         with open('analysis_data/test_cells_bach.pickle', "wb") as file_to_save:
             pickle.dump(cells, file_to_save)
     else:
@@ -55,6 +73,8 @@ def main():
     end = time.time()
     print("Total time is: ")
     print(end - start)
+    javabridge.kill_vm()
+
 
 if __name__ == '__main__':
     main()
