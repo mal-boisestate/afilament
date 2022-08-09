@@ -1,6 +1,8 @@
 from afilament.objects.Nucleus import Nucleus
 from afilament.objects.Fibers import Fibers
 from afilament.objects import Node
+from afilament.objects.Parameters import TestStructure
+import pickle
 
 
 class Cell(object):
@@ -16,6 +18,9 @@ class Cell(object):
         self.total_nodes = None
         self.cap_nodes = None
         self.bottom_nodes = None
+        self.actin_total_join = None
+        self.actin_cap_join = None
+        self.actin_bottom_join = None
 
 
     def analyze_nucleus(self, rot_angle, rotated_cnt_extremes, folders, unet_parm, img_resolution, analysis_folder):
@@ -35,7 +40,8 @@ class Cell(object):
 
 
     def analyze_actin_fibers(self, rot_angle, rotated_cnt_extremes, folders, unet_parm, part,
-                             fiber_min_layers_theshold, resolution, is_plot_fibers):
+                             fiber_min_layers_theshold, resolution, is_plot_fibers, is_connect_fibers,
+                             fiber_joint_angle, fiber_joint_distance):
         """
         Run fibers analysis based on part and save results in cell (self) object
         ---
@@ -52,6 +58,35 @@ class Cell(object):
         fibers = Fibers(part)
         rotated_max_projection, mid_cut_img = fibers.reconstruct(rot_angle, rotated_cnt_extremes, folders,
                                                                  unet_parm, part, fiber_min_layers_theshold, resolution)
+        if is_connect_fibers:
+            nodes, pairs = fibers.find_connections(fiber_joint_angle, fiber_joint_distance, resolution)
+            nodes_old, pairs_old = fibers.find_connections_old_version(fiber_joint_angle, fiber_joint_distance, resolution)
+            if is_connect_fibers:
+                print(f"New approach connection num: {len(pairs)}")
+                print(f"Old approach connection num: {len(pairs_old)}")
+                Node.plot_connected_nodes(fibers.fibers_list, nodes, pairs, "New method", False)
+                Node.plot_connected_nodes(fibers.fibers_list, nodes_old, pairs_old, "Old method", False)
+                test_structure = TestStructure(fibers, nodes, pairs, resolution)
+
+                with open('test_structure.pickle', "wb") as file_to_save:
+                    pickle.dump(test_structure, file_to_save)
+
+                join_fibers = Fibers(part)
+                join_fibers.merge_fibers(fibers, nodes, pairs, resolution)
+
+                join_fibers_old = Fibers(part)
+                join_fibers_old.merge_fibers(fibers, nodes_old, pairs_old, resolution)
+
+                if part == "whole":
+                    self.actin_total_join = join_fibers
+                elif part == "bottom":
+                    self.actin_bottom_join = join_fibers
+                elif part == "cap":
+                    self.actin_cap_join = join_fibers
+                if is_plot_fibers:
+                    join_fibers.plot("New method")
+                    join_fibers_old.plot("Old method")
+
         if part == "whole":
             self.actin_total = fibers
         elif part == "bottom":
@@ -60,21 +95,20 @@ class Cell(object):
             self.actin_cap = fibers
         else:
             raise ValueError(f"argument part should be whole, cap, or bottom, but {part} is specified")
-
         if is_plot_fibers:
             fibers.plot()
-
         return rotated_max_projection, mid_cut_img
+
 
     def find_branching(self, part, new_actin_len_th, is_plot_nodes):
         if part == "whole":
-            self.actin_total_with_nodes, self.total_nodes = Node.run_node_creation(self.actin_total.fibers_list, new_actin_len_th, is_plot_nodes)
+            self.actin_total_with_nodes, self.total_nodes = Node.find_branching_nodes(self.actin_total.fibers_list, new_actin_len_th, is_plot_nodes)
         elif part == "cap":
-            self.actin_cap_with_nodes, self.cap_nodes = Node.run_node_creation(self.actin_cap.fibers_list, new_actin_len_th, is_plot_nodes)
+            self.actin_cap_with_nodes, self.cap_nodes = Node.find_branching_nodes(self.actin_cap.fibers_list, new_actin_len_th, is_plot_nodes)
         elif part == "bottom":
-            self.actin_bottom_with_nodes, self.bottom_nodes = Node.run_node_creation(self.actin_bottom.fibers_list, new_actin_len_th, is_plot_nodes)
+            self.actin_bottom_with_nodes, self.bottom_nodes = Node.find_branching_nodes(self.actin_bottom.fibers_list, new_actin_len_th, is_plot_nodes)
 
-    def get_aggregated_cell_stat(self):
+    def get_aggregated_cell_stat(self, is_separate_cap_bottom):
         """
         [_, "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre", "Nucleus_width, micrometre",
          "Nucleus_high, micrometre", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num", "Total_fiber_volume, cubic_micrometre",
@@ -83,9 +117,14 @@ class Cell(object):
          "Slope_total_variance", "Slope_cap_variance", "Slope_bottom_variance",
          "Nodes_total, #", "Nodes_total, #", "Nodes_bottom, #"]
         """
-        return [self.number, self.nucleus.nuc_volume, self.nucleus.nuc_length, self.nucleus.nuc_width, self.nucleus.nuc_high,
-                self.actin_total.total_num, self.actin_cap.total_num, self.actin_bottom.total_num,
-                self.actin_total.total_volume, self.actin_cap.total_volume, self.actin_bottom.total_volume,
-                self.actin_total.total_length, self.actin_cap.total_length, self.actin_bottom.total_length,
-                self.actin_total.slope_variance, self.actin_cap.slope_variance, self.actin_bottom.slope_variance,
-                len(self.total_nodes), len(self.cap_nodes), len(self.bottom_nodes)]
+        if is_separate_cap_bottom:
+            return [self.number, self.nucleus.nuc_volume, self.nucleus.nuc_length, self.nucleus.nuc_width, self.nucleus.nuc_high,
+                    self.actin_total.total_num, self.actin_cap.total_num, self.actin_bottom.total_num,
+                    self.actin_total.total_volume, self.actin_cap.total_volume, self.actin_bottom.total_volume,
+                    self.actin_total.total_length, self.actin_cap.total_length, self.actin_bottom.total_length,
+                    self.actin_total.slope_variance, self.actin_cap.slope_variance, self.actin_bottom.slope_variance,
+                    len(self.total_nodes), len(self.cap_nodes), len(self.bottom_nodes)]
+        else:
+            return [self.number, self.nucleus.nuc_volume, self.nucleus.nuc_length, self.nucleus.nuc_width,
+                    self.nucleus.nuc_high, self.actin_total.total_num, self.actin_total.total_volume,
+                    self.actin_total.total_length, self.actin_total.slope_variance, len(self.total_nodes)]

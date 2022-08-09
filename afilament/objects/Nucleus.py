@@ -4,8 +4,8 @@ import numpy as np
 from pathlib import Path
 
 from afilament.objects import Utils
-from unet.predict import run_predict_unet
 from afilament.objects import Contour
+from unet.predict import run_predict_unet
 
 
 class Nucleus(object):

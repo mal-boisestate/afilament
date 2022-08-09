@@ -1,6 +1,7 @@
 import glob
 import os
 import cv2.cv2 as cv2
+import math
 import numpy as np
 from afilament.objects import Contour
 from afilament.objects.ConfocalImgReader import ConfocalImgReaderCzi
@@ -265,7 +266,7 @@ def find_biggest_nucleus_layer(temp_folders, treshold, find_biggest_mode, unet_p
         current_nucleus_cnt_area = cv2.contourArea(current_nucleus_cnt)
         if current_nucleus_cnt_area > nucleus_area:
             nucleus_area = current_nucleus_cnt_area
-            mask = Contour.draw_cnts(current_nucleus_cnt, nucleus_img.shape[:2])
+            mask = Contour.draw_cnt(current_nucleus_cnt, nucleus_img.shape[:2])
     return mask
 
 
@@ -308,6 +309,27 @@ def plot_histogram(title, image):
     plt.show()
 
 
+def is_point_in_pyramid(x, y, z, x_test, y_test, z_test, con_angle, min_len, resolution):
+    is_x_in_pyramid = x_test < x + min_len
+    # Find y frame based on known angle and the height of the triangle (con_angle)
+    sin = math.sin(math.radians(con_angle))
+    y_frame = abs(sin * (x - x_test))
+    is_y_in_pyramid = y - y_frame <= y_test <= y + y_frame
+    z_frame = int(y_frame * (resolution.y / resolution.z))  #Since pixel size is different for xy and xz planes, adjustment should be done
+    is_z_in_pyramid = z - z_frame <= z_test <= z + z_frame
+    return is_x_in_pyramid and is_y_in_pyramid and is_z_in_pyramid
 
 
+def rotate_point(rotated_point, main_point, rot_angle):
+    """
+    Based on https://math.stackexchange.com/questions/3244392/getting-transformed-rotated-coordinates-relative-to
+    -the-center-of-a-rotated-ima example the new coordinates of the candidates' starting point (p1,p2) after a rotation by θ
+    degrees around the ending point of the main line (a,b): (a + x cos θ − y sin θ,   b + x sin θ + y cos θ)
+    where x = p1−a, y = p2−b
+    """
+    x = rotated_point[0] - main_point[0]
+    y = rotated_point[1] - main_point[1]
+    new_coordinates = (int(main_point[0] + x * math.cos(math.radians(rot_angle)) - y * math.sin(math.radians(rot_angle))),
+                       int(main_point[1] + x * math.sin(math.radians(rot_angle)) + y * math.cos(math.radians(rot_angle))))
+    return new_coordinates
 

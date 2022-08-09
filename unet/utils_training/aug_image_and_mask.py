@@ -8,8 +8,8 @@ import glob
 
 
 if __name__ == '__main__':
-    folder_path = r"D:\BioLab\img\Big_nucleus_training_img_and_mask\nuceus_from_top_training\img"
-    mask_folder_path =r"D:\BioLab\img\Big_nucleus_training_img_and_mask\nuceus_from_top_training\mask"
+    folder_path = r"D:\BioLab\img\training_sets\microtubules_comets\img"
+    mask_folder_path =r"D:\BioLab\img\training_sets\microtubules_comets\mask"
 
     for i, img_path in enumerate(glob.glob(os.path.join(folder_path, "*.png"))):
         mask_path = glob.glob(os.path.join(mask_folder_path, "*.bmp"))[i]
@@ -23,7 +23,7 @@ if __name__ == '__main__':
         height_shift = 1 / 2 * (height - ((height / 2) ** 2 + (width / 2) ** 2) ** (1 / 2))
         gamma = [0.80, 0.90, 1, 1, 1, 1.10, 1.20]
 
-        for j in np.arange(10):
+        for j in np.arange(3):
             #angle_to_rotate = randrange(360)
             gamma_corrected = Image.fromarray(np.array(255 * (np.array(nucleus_img)/ 255) ** random.choice(gamma), dtype='uint8'))
             angle_to_rotate = random.choice([0, 90, 180, 270])
@@ -43,8 +43,8 @@ if __name__ == '__main__':
 
             img_file_name = '_aug_' + str(j) + '_' + img_file
             mask_file_name = '_aug_' + str(j) + '_' + mask_file
-            img_path_to_save = os.path.join(r"D:\BioLab\img\Big_nucleus_training_img_and_mask\nuceus_from_top_training\aug_img", img_file_name)
-            mask_path_to_save = os.path.join(r"D:\BioLab\img\Big_nucleus_training_img_and_mask\nuceus_from_top_training\aug_mask", mask_file_name)
+            img_path_to_save = os.path.join(r"D:\BioLab\img\training_sets\microtubules_comets\img_aug", img_file_name)
+            mask_path_to_save = os.path.join(r"D:\BioLab\img\training_sets\microtubules_comets\mask_aug", mask_file_name)
             aug_img.save(img_path_to_save)
             aug_mask.save(mask_path_to_save)
             print("Processing " + img_path)

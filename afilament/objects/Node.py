@@ -8,6 +8,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import csv
+import copy
 
 from afilament.objects.SingleFiber import SingleFiber
 
@@ -45,6 +46,40 @@ class Node:
         self.ideal_y = y
         self.ideal_z = z
 
+def plot_connected_nodes(actin_fibers, nodes, pairs, user_title="", plot_nodes=True):
+    ax = plt.axes(projection='3d')
+    # ax = plt.axes()  #for 2D testing
+    for fiber in actin_fibers:
+        if len(np.unique(fiber.zs)) < 1:
+            continue
+
+        # Draw only center points
+        xdata = fiber.xs
+        ydata = fiber.ys
+        zdata = fiber.zs
+        color_x = 1.0 * np.random.randint(255) / 255
+        color_y = 1.0 * np.random.randint(255) / 255
+        color_z = 1.0 * np.random.randint(255) / 255
+        if xdata:
+            ax.scatter3D(xdata, ydata, zdata, c=[[color_x, color_y, color_z]] * len(xdata), cmap='Greens')
+
+    if plot_nodes:
+        xdata, ydata, zdata = [], [], []
+        for node in nodes:
+            xdata.append(node.x)
+            ydata.append(node.y)
+            zdata.append(node.z)
+        color_x = 1.0
+        color_y = 0
+        color_z = 0
+        if xdata:
+            ax.scatter3D(xdata, ydata, zdata, c=[[color_x, color_y, color_z]] * len(xdata), s=50, cmap='Greens')
+
+    for right_id, left_id in pairs:
+        right_node, left_node = nodes[right_id], nodes[left_id]
+        plt.plot((right_node.x, left_node.x), (right_node.y, left_node.y), (right_node.z, left_node.z), color='black')
+    plt.title(f"Show fibers connections \n {user_title}")
+    plt.show()
 
 def plot_nodes(actin_fibers, nodes):
     ax = plt.axes(projection='3d')
@@ -77,18 +112,22 @@ def plot_nodes(actin_fibers, nodes):
     plt.show()
 
 
-
-def run_node_creation(actin_fibers, new_actin_len_th, is_plot_nodes):
-    """
-    new_actin_len_th - do not breake actin if one of the part is too small
-    """
-
+def add_edge_nodes(actin_fibers):
     nodes = []
     for actin_id, actin in enumerate(actin_fibers):
         nodes.append(Node(actin.xs[0], actin.ys[0], actin.zs[0], actin.cnts[0], actin_id))  # left side
         nodes.append(Node(actin.xs[-1], actin.ys[-1], actin.zs[-1], actin.cnts[-1], actin_id))  # right side
         actin.left_node_id = len(nodes) - 2
         actin.right_node_id = len(nodes) - 1
+    return actin_fibers, nodes
+
+
+def find_branching_nodes(not_copied_fibers, new_actin_len_th, is_plot_nodes):
+    """
+    new_actin_len_th - do not breake actin if one of the part is too small
+    """
+    actin_fibers = copy.deepcopy(not_copied_fibers)
+    actin_fibers, nodes = add_edge_nodes(actin_fibers)
 
     for left_node in nodes[::2]:
         actin_id_to_break = None

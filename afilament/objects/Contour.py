@@ -6,6 +6,7 @@ def get_mask_cnt(mask):
     cnt = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0][0]
     return cnt
 
+
 def get_biggest_cnt(img, theshold):
     cnts = get_img_cnts(img, theshold)
     if cnts is None:
@@ -13,6 +14,7 @@ def get_biggest_cnt(img, theshold):
     cnt = sorted(cnts, key=lambda cnt: cv2.contourArea(cnt), reverse=True)[0]
     cont = cnt
     return cnt
+
 
 def get_img_cnts(img, theshold):
     """
@@ -43,11 +45,13 @@ def get_img_cnts(img, theshold):
 
     return cnts
 
-def draw_cnts(cont, shape):
+
+def draw_cnt(cont, shape):
     mask = np.zeros(shape, dtype=np.uint8)
     cv2.drawContours(mask, [cont], -1, color=255, thickness=-1)
 
     return mask
+
 
 def get_cnt_extremes(cont):
     """
@@ -67,6 +71,7 @@ def get_cnt_extremes(cont):
 
     return CntExtremes(left, right, top, bottom)
 
+
 def get_cnt_center(cont):
     if len(cont) <= 2:
         center = (cont[0, 0, 0], cont[0, 0, 1])
@@ -82,8 +87,6 @@ def get_cnt_center(cont):
         center = (center_x, center_y)
 
     return center
-
-
 
 
 class CntExtremes(object):

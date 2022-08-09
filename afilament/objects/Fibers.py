@@ -4,12 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 import statistics
-
+from collections import defaultdict
 from afilament.objects import Utils
 from unet.predict import run_predict_unet
 from afilament.objects import Contour
 from afilament.objects.SingleFiber import SingleFiber
-from afilament.objects.Node import Node
+from afilament.objects.Node import Node, add_edge_nodes
+from afilament.objects.MergedFiber import MergedFiber
 
 
 class ActinContour(object):
@@ -31,6 +32,7 @@ class Fibers(object):
         self.total_num = None
         self.fibers_list = None
         self.slope_variance = None
+        self.is_merged = False
 
     def get_actin_cnt_objs(self, xsection, x):
         cnts = cv2.findContours(xsection, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
@@ -161,31 +163,194 @@ class Fibers(object):
             filtered_actin_fibers = [fiber for fiber in actin_fibers if fiber.part == part]
             actin_fibers = filtered_actin_fibers
         self.fibers_list = actin_fibers
-        self._add_aggregated_fibers_stat(resolution)
+        self._add_fibers_aggregated_stat(resolution)
 
         return rotated_max_projection, mid_cut_img
 
-    def plot(self):
+    def plot(self, user_title=""):
         ax = plt.axes(projection='3d')
-        # ax = plt.axes()  #for 2D testing
-        for fiber in self.fibers_list:
-            if len(np.unique(fiber.zs)) < 1:
-                continue
+        if self.is_merged:
+            for merged_fiber in self.fibers_list:
+                color_x = 1.0 * np.random.randint(255) / 255
+                color_y = 1.0 * np.random.randint(255) / 255
+                color_z = 1.0 * np.random.randint(255) / 255
+                for fiber in merged_fiber.fibers:
+                    if len(np.unique(fiber.zs)) < 1:
+                        continue
+                    # Draw only center points
+                    xdata = fiber.xs
+                    ydata = fiber.ys
+                    zdata = fiber.zs
+                    if xdata:
+                        ax.scatter3D(xdata, ydata, zdata, c=[[color_x, color_y, color_z]] * len(xdata), cmap='Greens')
+            plt.title(f"Merged fibers \n {user_title}")
+            plt.show()
 
-            # Draw only center points
-            xdata = fiber.xs
-            ydata = fiber.ys
-            zdata = fiber.zs
-            color_x = 1.0 * np.random.randint(255) / 255
-            color_y = 1.0 * np.random.randint(255) / 255
-            color_z = 1.0 * np.random.randint(255) / 255
-            if xdata:
-                ax.scatter3D(xdata, ydata, zdata, c=[[color_x, color_y, color_z]] * len(xdata), cmap='Greens')
+        else:
+            for fiber in self.fibers_list:
+                if len(np.unique(fiber.zs)) < 1:
+                    continue
+                # Draw only center points
+                xdata = fiber.xs
+                ydata = fiber.ys
+                zdata = fiber.zs
+                color_x = 1.0 * np.random.randint(255) / 255
+                color_y = 1.0 * np.random.randint(255) / 255
+                color_z = 1.0 * np.random.randint(255) / 255
+                if xdata:
+                    ax.scatter3D(xdata, ydata, zdata, c=[[color_x, color_y, color_z]] * len(xdata), cmap='Greens')
+            plt.title(f"Single fibers \n {user_title}")
+            plt.show()
 
-        plt.show()
+
+    def find_connections(self, pyramid_apex_angle, max_distance, resolution):
+        """
+        Join fibers if, based on the analysis, fibers look like segments of one fiber:
+        - candidate fiber's edge node (right_node) should be located within the pyramid projected from the main node (left_node)
+
+                           /  +----- (first candidate)
+                          /
+        main node  ----+    (con_angle * 2)
+                         \      +----- (second candidate)
+                          \
+        - The central ax of the pyramid is aligned according to the main fiber direction.
+          To do so, we rotate the xy projection so the main fiber is parallel to the x-axes
+        -------------------------                               -------------------------
+        |         /  candidate 1 |                              |                 /      |
+        |        /               |                              |               /        |
+        |            -- -- --    |                              |             /          |
+        |      ++    candidate 2 |    --> rotate based    -->   |   == == ==+    -- --   |  --> only candidate 1 is located within
+        |     //                 |        on main (double)      |  main fiber \  can 1   |      the area of interest. H
+        |    //                  |        line angle            |             |\         |      However, if we neglect rotation, candidate 2
+        |   //                   |                              |             | \        |      will be assigned as a segment of the main fiber
+        | main fiber             |                              |       can2  |          |
+        --------------------------                              -------------------------
+
+        ---
+        Parameters:
+        - pyramid_apex_angle (int): pyramid apex angle in degrees
+        - max_distance (int): maximal distance between nodes, when two fibers can be considered as the pieces of one fiber
+        - resolution: (ImgResolution object): x,y,z pixels sizes
+        """
+        self.fibers_list, nodes = add_edge_nodes(self.fibers_list)
+
+        # Actin merging code (triangle approach), create merge candidate dictionary
+        right_nodes = [(node_id, node) for node_id, node in enumerate(nodes)
+                       if len(node.actin_ids) == 1 and self.fibers_list[node.actin_ids[0]].right_node_id == node_id]
+
+        left_nodes = [(node_id, node) for node_id, node in enumerate(nodes)
+                      if len(node.actin_ids) == 1 and self.fibers_list[node.actin_ids[0]].left_node_id == node_id]
+
+        node_to_candidates = defaultdict(lambda: [])
+        for righ_node_id, right_node in right_nodes:
+            fiber = self.fibers_list[right_node.actin_ids[0]]
+            rot_angle = fiber.find_fiber_alignment_angle()
+            anchor_point = (0, 0)
+            right_rotated = Utils.rotate_point((right_node.x,right_node.y), anchor_point, rot_angle)
+            for left_node_id, left_node in left_nodes:
+                left_rotated = Utils.rotate_point((left_node.x,left_node.y), anchor_point, rot_angle)
+                if right_rotated[0] < left_rotated[0] and np.linalg.norm(np.array(right_rotated) - np.array(left_rotated)) <= max_distance:
+                    if Utils.is_point_in_pyramid(right_rotated[0], right_rotated[1], right_node.z, left_rotated[0], left_rotated[1], left_node.z,
+                                                 pyramid_apex_angle, max_distance, resolution):
+                            node_to_candidates[righ_node_id].append([left_node_id,
+                                                                     np.sqrt((left_node.x - right_node.x) ** 2 +
+                                                                             (left_node.y - right_node.y) ** 2 +
+                                                                             (left_node.z - right_node.z) ** 2)])
+
+        node_to_candidates_list = []
+        for k, v in node_to_candidates.items():
+            node_to_candidates[k] = sorted(v, key=lambda x: x[1])
+            node_to_candidates_list.append([k, v])
+
+        # Create actual pairs of nodes to connect
+        pairs = []
+        while len(node_to_candidates_list) > 0:
+            # find min distance
+            min_distance = 10000
+            r, l, pop_idx = None, None, None
+            for idx, (right_node, candidate_distance_list) in enumerate(node_to_candidates_list):
+                if min_distance > candidate_distance_list[0][1]:
+                    min_distance = candidate_distance_list[0][1]
+                    r, l, pop_idx = right_node, candidate_distance_list[0][0], idx
+            pairs.append([r, l])
+            node_to_candidates_list.pop(pop_idx)
+
+            # remove left node from others candidates
+            for right_node, candidate_distance_list in node_to_candidates_list:
+                lefts = [item[0] for item in candidate_distance_list]
+                if l in lefts:
+                    candidate_distance_list.pop(lefts.index(l))
+
+            indicies_to_remove = []
+            for idx, (right_node, candidate_distance_list) in enumerate(node_to_candidates_list):
+                if len(candidate_distance_list) == 0:
+                    indicies_to_remove.append(idx)
+
+            for idx in indicies_to_remove[::-1]:
+                node_to_candidates_list.pop(idx)
+
+        return nodes, pairs
 
 
-    def _add_aggregated_fibers_stat(self, resolution):
+    def find_connections_old_version(self, con_angle, min_len, resolution):
+        """
+        The previous version of connect function does not align the pyramid's
+        central ax according to the main fiber direction.
+        """
+        self.fibers_list, nodes = add_edge_nodes(self.fibers_list)
+
+        # Actin merging code (triangle approach), create merge candidate dictionary
+        right_nodes = [(node_id, node) for node_id, node in enumerate(nodes)
+                       if len(node.actin_ids) == 1 and self.fibers_list[node.actin_ids[0]].right_node_id == node_id]
+
+        left_nodes = [(node_id, node) for node_id, node in enumerate(nodes)
+                      if len(node.actin_ids) == 1 and self.fibers_list[node.actin_ids[0]].left_node_id == node_id]
+
+        node_to_candidates = defaultdict(lambda: [])
+        for righ_node_id, right_node in right_nodes:
+            for left_node_id, left_node in left_nodes:
+                if right_node.x < left_node.x and np.linalg.norm(np.array((right_node.x, right_node.y)) - np.array((left_node.x, left_node.y))) <= min_len:
+                    if Utils.is_point_in_pyramid(right_node.x, right_node.y, right_node.z, left_node.x, left_node.y, left_node.z,
+                                                     con_angle, min_len, resolution):
+                            node_to_candidates[righ_node_id].append([left_node_id,
+                                                                     np.sqrt((left_node.x - right_node.x) ** 2 +
+                                                                             (left_node.y - right_node.y) ** 2 +
+                                                                             (left_node.z - right_node.z) ** 2)])
+        node_to_candidates_list = []
+        for k, v in node_to_candidates.items():
+            node_to_candidates[k] = sorted(v, key=lambda x: x[1])
+            node_to_candidates_list.append([k, v])
+
+        # Create actual pairs of nodes to connect
+        pairs = []
+        while len(node_to_candidates_list) > 0:
+            # find min distance
+            min_distance = 10000
+            r, l, pop_idx = None, None, None
+            for idx, (right_node, candidate_distance_list) in enumerate(node_to_candidates_list):
+                if min_distance > candidate_distance_list[0][1]:
+                    min_distance = candidate_distance_list[0][1]
+                    r, l, pop_idx = right_node, candidate_distance_list[0][0], idx
+            pairs.append([r, l])
+            node_to_candidates_list.pop(pop_idx)
+
+            # remove left node from others candidates
+            for right_node, candidate_distance_list in node_to_candidates_list:
+                lefts = [item[0] for item in candidate_distance_list]
+                if l in lefts:
+                    candidate_distance_list.pop(lefts.index(l))
+
+            indicies_to_remove = []
+            for idx, (right_node, candidate_distance_list) in enumerate(node_to_candidates_list):
+                if len(candidate_distance_list) == 0:
+                    indicies_to_remove.append(idx)
+
+            for idx in indicies_to_remove[::-1]:
+                node_to_candidates_list.pop(idx)
+
+        return nodes, pairs
+
+    def _add_fibers_aggregated_stat(self, resolution):
         total_volume = 0
         total_actin_length = 0
         total_num = 0
@@ -202,11 +367,35 @@ class Fibers(object):
             else:
                 slope = math.degrees(math.tan((fiber.ys[-1] - fiber.ys[0]) / (fiber.xs[-1] - fiber.xs[0])))
             slopes.append(slope)
-
-        self.slope_variance = statistics.variance(slopes)
+        if len(slopes) < 2: #Fix "statistics.StatisticsError: variance requires at least two data points"
+            self.slope_variance = 0
+        else:
+            self.slope_variance = statistics.variance(slopes)
         self.total_volume = total_volume
         self.total_length = total_actin_length
         self.total_num = total_num
+
+
+    def _update_merged_fibers_aggregated_stat(self, resolution):
+        total_volume = 0
+        total_actin_length = 0
+        total_num = 0
+        slopes = []
+        for i, fiber in enumerate(self.fibers_list):
+            merged_actin_length_with_gaps, merged_actin_xsection, merged_actin_volume_with_gaps, merged_n, slop = fiber.get_stat(resolution)
+            total_actin_length = total_actin_length + merged_actin_length_with_gaps
+            total_volume = total_volume + merged_actin_volume_with_gaps
+            total_num = total_num + 1
+            slopes.append(slop)
+        if len(slopes) < 2: #Fix "statistics.StatisticsError: variance requires at least two data points"
+            self.slope_variance = 0
+        else:
+            self.slope_variance = statistics.variance(slopes)
+
+        self.total_volume = total_volume
+        self.total_length = total_actin_length
+        self.total_num = total_num
+
 
     def save_each_fiber_stat(self, resolution, file_path):
         header_row = ["ID", "Actin Length", "Actin Xsection", "Actin Volume", "Number of fiber layers", "Slope"]
@@ -216,6 +405,42 @@ class Fibers(object):
 
             for fiber_id, fiber in enumerate(self.fibers_list):
                 csv_writer.writerow([str(fiber_id)] + fiber.get_stat(resolution))
+
+
+    def merge_fibers(self, fibers, nodes, pairs, resolution):
+        merged_fibers = []
+
+        for i, fiber in enumerate(fibers.fibers_list):
+            merged_fiber = MergedFiber(fiber, i)
+            merged_fibers.append(merged_fiber)
+
+        for pair in pairs:
+            left_node = nodes[pair[0]]
+            right_node = nodes[pair[1]]
+            left_fiber_id = left_node.actin_ids[0]
+            right_fiber_id = right_node.actin_ids[0]
+            merged_left_fiber = [merged_fiber for merged_fiber in merged_fibers if left_fiber_id in merged_fiber.fibers_ids][0]
+            merged_fibers.remove(merged_left_fiber)
+            merged_right_fiber = [merged_fiber for merged_fiber in merged_fibers if right_fiber_id in merged_fiber.fibers_ids][0]
+            merged_fibers.remove(merged_right_fiber)
+            merged_left_fiber.merge(merged_right_fiber, left_node, right_node, resolution)
+            merged_fibers.append(merged_left_fiber)
+
+        self.is_merged = True
+        self.fibers_list = merged_fibers
+        self._update_merged_fibers_aggregated_stat(resolution)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -14,3 +14,11 @@ class ImgResolution(object):
         self.x = x
         self.y = y
         self.z = z
+
+class TestStructure(object):
+
+    def __init__ (self, fibers, nodes, pairs, resolution):
+        self.fibers = fibers
+        self.nodes = nodes
+        self.pairs = pairs
+        self.resolution = resolution

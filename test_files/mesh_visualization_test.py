@@ -13,7 +13,7 @@ from colour import Color
 import pickle
 import pyvista as pv
 import pymeshfix as mf
-from afilament.objects.Node import run_node_creation
+from afilament.objects.Node import find_branching_nodes
 from afilament.objects.Parameters import ImgResolution
 
 
@@ -52,7 +52,7 @@ def optimize_mesh(tmesh, scale):
 
 def get_nodes(cell, resolution):
     fibers = cell.actin_total
-    nodes, actin_fibers_w_nodes = run_node_creation(fibers.fibers_list, new_actin_len_th=2, is_plot_nodes=False)
+    nodes, actin_fibers_w_nodes = find_branching_nodes(fibers.fibers_list, new_actin_len_th=2, is_plot_nodes=False)
     nodes_points = np.array([])
     for node in nodes:
         node_point = np.array([node.x, node.y, node.z])
@@ -102,39 +102,64 @@ def draw_closest_nodes(p, closest_nodes_indx, mesh):
 
 def draw_fibers(mesh, p, cell):
     fibers = cell.actin_total.fibers_list
-    red = Color("red")
-    colors = list(red.range_to(Color("green"), len(fibers)))
+    total_fibers_num = 0
+    total_dots_num = 0
 
     for color_indx, fiber in tqdm(enumerate(fibers)):
+
         actin_xsection = np.mean([cv2.contourArea(cnt) for cnt in fiber.cnts]) * resolution.y * resolution.z
         r = lambda: np.random.randint(0, 255)
         color = '#%02X%02X%02X' % (r(), r(), r())
-        # color = colors[color_indx].hex_l
+        total_fibers_num += 1
         for i in range(fiber.n):
             fiber_point = np.array([fiber.xs[i], fiber.ys[i], fiber.zs[i] * resolution.z / resolution.y])
             closest_fiber_point_indx = mesh.find_closest_point(fiber_point)
             p.add_mesh(mesh.points[closest_fiber_point_indx], color=color, point_size=actin_xsection*20, render_points_as_spheres=True, style='points')
+            total_dots_num += 1
+    print(f"Total fibers num: {total_fibers_num} | Total cnt num: {total_dots_num}")
 
 
+
+def draw_merged_fibers(mesh, p, cell):
+    merged_fibers = cell.actin_total_join.fibers_list
+    # red = Color("red")
+    # colors = list(red.range_to(Color("green"), len(merged_fibers)))
+    total_fibers_num = 0
+    total_dots_num = 0
+    for color_indx, merged_fiber in tqdm(enumerate(merged_fibers)):
+        r = lambda: np.random.randint(0, 255)
+        color = '#%02X%02X%02X' % (r(), r(), r())
+        for fiber in merged_fiber.fibers:
+            actin_xsection = np.mean([cv2.contourArea(cnt) for cnt in fiber.cnts]) * resolution.y * resolution.z
+            total_fibers_num += 1
+
+            # color = colors[color_indx].hex_l
+            for i in range(fiber.n):
+                fiber_point = np.array([fiber.xs[i], fiber.ys[i], fiber.zs[i] * resolution.z / resolution.y])
+                closest_fiber_point_indx = mesh.find_closest_point(fiber_point)
+                p.add_mesh(mesh.points[closest_fiber_point_indx], color=color, point_size=actin_xsection * 20,
+                           render_points_as_spheres=True, style='points')
+                total_dots_num += 1
+    print(f"Total merged fibers num: {total_fibers_num} | Total merged cnt num: {total_dots_num}")
 
 if __name__ == '__main__':
     scale_x = 0.05882
     scale_y = 0.05882
     scale_z = 0.270
     resolution = ImgResolution(scale_x, scale_y, scale_z)
-    file_path = r"D:\BioLab\Current_experiments\2022.06.02_very_first_cell_analysis_data\test_cells_bach.pickle"
+    # file_path=r"D:\BioLab\scr_2.0\afilament\analysis_data\test_cells_bach.pickle"
+    file_path = r"D:\BioLab\Current_experiments\afilament\2022.08.09_very_first_cell_analysis_data\analysis_data\test_cells_bach.pickle"
     cells = pickle.load(open(file_path, "rb"))
     cell = cells[0]
     tmesh = get_nuc_mesh(cell)
     final_mesh = optimize_mesh(tmesh, resolution)
-    fibers, nodes, nodes_point_cloud_scaled = get_nodes(cell, resolution)
-
-
+    # fibers, nodes, nodes_point_cloud_scaled = get_nodes(cell, resolution)
 
     # closest_nodes_indx = find_closest_nodes(final_mesh, nodes, resolution)
 
     p = pv.Plotter()
     draw_fibers(final_mesh, p, cell)
+    # draw_merged_fibers(final_mesh, p, cell)
     #
     # # draw_fibers_as_geopath(final_mesh, p, nodes, fibers, resolution)
     # # draw_nodes(p, nodes, resolution)
