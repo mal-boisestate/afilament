@@ -11,12 +11,12 @@ import logging
 
 def main():
     RECALCULATE = False
-    cell_nums = [1]
+    cell_nums = [0]
     # 2 nuc thershold 30 does not work
-    nucleus_channel = 0  # 1 for original czi file
-    actin_channel = 1  # 0 for original czi file
-    confocal_img = r"D:\BioLab\img\Confocal_img\2022.05.25_leica_DAPI_488\2022.05.25_MSC_Control_Series-01-20.lif"
-    # confocal_img = r"C:\Users\nnina\Desktop\imagies" # Path to folder(czi) or file (lif)
+    nucleus_channel = 1  # 1 for original czi file
+    actin_channel = 0  # 0 for original czi file
+    # confocal_img = r"D:\BioLab\img\Confocal_img\2022.05.25_leica_DAPI_488\2022.05.25_MSC_Control_Series-01-20.lif"
+    confocal_img = r"C:\Users\nnina\Desktop\imagies" # Path to folder(czi) or file (lif)
     nuc_theshold = 30
     fiber_min_layers_theshold = 10 #in pixels
     node_actin_len_th = 2 #for node creation, do not breake actin if one of the part is too small
@@ -35,7 +35,7 @@ def main():
     is_connect_fibers = True
     norm_th = 2**16 #when auto chose it will be recalculated format is tuple example (1000, 1000)
     find_biggest_mode = "trh" #"unet" or "trh"
-    fiber_joint_angle = 30
+    fiber_joint_angle = 10
     fiber_joint_distance = 50
     javabridge.start_vm(class_path=bioformats.JARS)
 
@@ -57,8 +57,6 @@ def main():
         for cell_num in cell_nums:
             cell = analyser.analyze_cell(cell_num)
             cells.append(cell)
-
-
 
             # try:
             #     cell = analyser.analyze_cell(cell_num, cap=True, bottom=True)

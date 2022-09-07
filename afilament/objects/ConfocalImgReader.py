@@ -6,7 +6,7 @@ import math
 from tqdm import tqdm
 from czifile import CziFile
 import glob
-from readlif.reader import LifFile
+# from readlif.reader import LifFile
 from pathlib import Path
 from PIL import Image
 import math

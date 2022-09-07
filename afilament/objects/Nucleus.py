@@ -2,6 +2,7 @@ import os
 import cv2.cv2 as cv2
 import numpy as np
 from pathlib import Path
+import math
 
 from afilament.objects import Utils
 from afilament.objects import Contour
@@ -42,10 +43,10 @@ class Nucleus(object):
                          unet_parm.unet_model_scale,
                          unet_parm.unet_model_thrh)
         self.nuc_3D = Utils.get_3d_img(temp_folders["nucleus_mask"])
-        self.nuc_volume, self.point_cloud, self.nuc_high = self.nucleus_reco_3d(resolution, analysis_folder)
+        self.nuc_volume, self.point_cloud = self.nucleus_reco_3d(resolution, analysis_folder)
         self.nuc_length = (cnt_extremes.right[0] - cnt_extremes.left[0]) * resolution.x
         self.nuc_width = (cnt_extremes.bottom[1] - cnt_extremes.top[1]) * resolution.y
-
+        self.nuc_high = 2 * self.nuc_volume * 3/4 / (math.pi * self.nuc_length/2 * self.nuc_width/2)
     def nucleus_reco_3d(self, resolution, analysis_folder):
         points = []
 
@@ -79,16 +80,13 @@ class Nucleus(object):
         np.savetxt(path, np.array(points, dtype=int), delimiter=",", fmt="%10.0f")
 
         print("Nucleus volume: {}".format(volume))
-        nuc_high = (max(zdata) - min(zdata)) * resolution.z
-        print(f"Nuc middle coordinate is {nuc_high}")
-        print(f"Nuc hights is {nuc_high}")
 
 
         # TODO: to print out nucleus data commented this out
         # ax = plt.axes(projection='3d')
         # ax.scatter3D(ydata, zdata, xdata, cmap='Greens', alpha=0.5)
         # plt.show()
-        return volume, points, nuc_high
+        return volume, points
 
     def get_nucleus_origin(self):
         """

@@ -308,8 +308,7 @@ def plot_histogram(title, image):
     plt.plot(histogram)  # <- or here
     plt.show()
 
-
-def is_point_in_pyramid(x, y, z, x_test, y_test, z_test, con_angle, min_len, resolution):
+def is_point_in_pyramid_old_version (x, y, z, x_test, y_test, z_test, con_angle, min_len, resolution):
     is_x_in_pyramid = x_test < x + min_len
     # Find y frame based on known angle and the height of the triangle (con_angle)
     sin = math.sin(math.radians(con_angle))
@@ -318,6 +317,22 @@ def is_point_in_pyramid(x, y, z, x_test, y_test, z_test, con_angle, min_len, res
     z_frame = int(y_frame * (resolution.y / resolution.z))  #Since pixel size is different for xy and xz planes, adjustment should be done
     is_z_in_pyramid = z - z_frame <= z_test <= z + z_frame
     return is_x_in_pyramid and is_y_in_pyramid and is_z_in_pyramid
+
+def is_point_in_pyramid(right_rotated_xy, right_rotated_xz, left_rotated_xy, left_rotated_xz, con_angle, con_angle_z, min_len, resolution):
+    x_y, y = right_rotated_xy
+    x_y_test, y_test = left_rotated_xy
+    x_z, z = right_rotated_xz
+    x_z_test, z_test = left_rotated_xz
+    is_x_y_in_pyramid = x_y_test < x_y + min_len
+    # Find y frame based on known angle and the height of the triangle (con_angle)
+    sin = math.sin(math.radians(con_angle))
+    sin_z = math.sin(math.radians(con_angle_z))
+    y_frame = abs(sin * (x_y - x_y_test))
+    is_y_in_pyramid = y - y_frame <= y_test <= y + y_frame
+    z_frame = int(abs(sin_z * (x_z - x_z_test)) * (resolution.y / resolution.z)) #Since pixel size is different for xy and xz planes, adjustment should be done
+    is_x_z_in_pyramid = x_z_test < x_z + min_len
+    is_z_in_pyramid = z - z_frame <= z_test <= z + z_frame
+    return is_x_y_in_pyramid and is_y_in_pyramid and is_x_z_in_pyramid and is_z_in_pyramid
 
 
 def rotate_point(rotated_point, main_point, rot_angle):
@@ -332,4 +347,12 @@ def rotate_point(rotated_point, main_point, rot_angle):
     new_coordinates = (int(main_point[0] + x * math.cos(math.radians(rot_angle)) - y * math.sin(math.radians(rot_angle))),
                        int(main_point[1] + x * math.sin(math.radians(rot_angle)) + y * math.cos(math.radians(rot_angle))))
     return new_coordinates
+    # ox, oy = main_point
+    # px, py = rotated_point
+    #
+    # qx = ox + math.cos(rot_angle) * (px - ox) - math.sin(rot_angle) * (py - oy)
+    # qy = oy + math.sin(rot_angle) * (px - ox) + math.cos(rot_angle) * (py - oy)
+    # return (qx, qy)
+
+
 

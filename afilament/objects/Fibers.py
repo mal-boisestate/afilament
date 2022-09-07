@@ -203,7 +203,7 @@ class Fibers(object):
             plt.show()
 
 
-    def find_connections(self, pyramid_apex_angle, max_distance, resolution):
+    def find_connections(self, pyramid_apex_angle, fiber_joint_angle_z, max_distance, resolution):
         """
         Join fibers if, based on the analysis, fibers look like segments of one fiber:
         - candidate fiber's edge node (right_node) should be located within the pyramid projected from the main node (left_node)
@@ -226,6 +226,7 @@ class Fibers(object):
         | main fiber             |                              |       can2  |          |
         --------------------------                              -------------------------
 
+    Also we consider difference between xz and xy since xz has curve tendency
         ---
         Parameters:
         - pyramid_apex_angle (int): pyramid apex angle in degrees
@@ -244,18 +245,21 @@ class Fibers(object):
         node_to_candidates = defaultdict(lambda: [])
         for righ_node_id, right_node in right_nodes:
             fiber = self.fibers_list[right_node.actin_ids[0]]
-            rot_angle = fiber.find_fiber_alignment_angle()
+            rot_angle_xy = fiber.find_fiber_alignment_angle("xy")
+            rot_angle_xz = fiber.find_fiber_alignment_angle("xz")
             anchor_point = (0, 0)
-            right_rotated = Utils.rotate_point((right_node.x,right_node.y), anchor_point, rot_angle)
+            right_rotated_xy = Utils.rotate_point((right_node.x,right_node.y), anchor_point, rot_angle_xy)
+            right_rotated_xz = Utils.rotate_point((right_node.x, right_node.z), anchor_point, rot_angle_xz)
             for left_node_id, left_node in left_nodes:
-                left_rotated = Utils.rotate_point((left_node.x,left_node.y), anchor_point, rot_angle)
-                if right_rotated[0] < left_rotated[0] and np.linalg.norm(np.array(right_rotated) - np.array(left_rotated)) <= max_distance:
-                    if Utils.is_point_in_pyramid(right_rotated[0], right_rotated[1], right_node.z, left_rotated[0], left_rotated[1], left_node.z,
-                                                 pyramid_apex_angle, max_distance, resolution):
-                            node_to_candidates[righ_node_id].append([left_node_id,
-                                                                     np.sqrt((left_node.x - right_node.x) ** 2 +
-                                                                             (left_node.y - right_node.y) ** 2 +
-                                                                             (left_node.z - right_node.z) ** 2)])
+                left_rotated_xy = Utils.rotate_point((left_node.x,left_node.y), anchor_point, rot_angle_xy)
+                left_rotated_xz = Utils.rotate_point((left_node.x,left_node.z), anchor_point, rot_angle_xz)
+                distance_between_nodes = (np.linalg.norm(np.array([left_node.x, left_node.y, left_node.z/(resolution.z/resolution.x)]) - np.array([right_node.x, right_node.y, right_node.z/(resolution.z/resolution.x)])))
+                if right_rotated_xy[0] < left_rotated_xy[0] and distance_between_nodes <= max_distance:
+                    if Utils.is_point_in_pyramid(right_rotated_xy, right_rotated_xz, left_rotated_xy, left_rotated_xz, pyramid_apex_angle, fiber_joint_angle_z, max_distance, resolution):
+                        candidate_fiber = self.fibers_list[left_node.actin_ids[0]]
+                        if candidate_fiber.n < distance_between_nodes or fiber.n < distance_between_nodes or abs(candidate_fiber.find_fiber_alignment_angle("xy")) > 60:
+                            continue
+                        node_to_candidates[righ_node_id].append([left_node_id, distance_between_nodes])
 
         node_to_candidates_list = []
         for k, v in node_to_candidates.items():
@@ -310,7 +314,7 @@ class Fibers(object):
         for righ_node_id, right_node in right_nodes:
             for left_node_id, left_node in left_nodes:
                 if right_node.x < left_node.x and np.linalg.norm(np.array((right_node.x, right_node.y)) - np.array((left_node.x, left_node.y))) <= min_len:
-                    if Utils.is_point_in_pyramid(right_node.x, right_node.y, right_node.z, left_node.x, left_node.y, left_node.z,
+                    if Utils.is_point_in_pyramid_old_version(right_node.x, right_node.y, right_node.z, left_node.x, left_node.y, left_node.z,
                                                      con_angle, min_len, resolution):
                             node_to_candidates[righ_node_id].append([left_node_id,
                                                                      np.sqrt((left_node.x - right_node.x) ** 2 +

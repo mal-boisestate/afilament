@@ -3,6 +3,7 @@ from afilament.objects.Fibers import Fibers
 from afilament.objects import Node
 from afilament.objects.Parameters import TestStructure
 import pickle
+import math
 
 
 class Cell(object):
@@ -59,7 +60,8 @@ class Cell(object):
         rotated_max_projection, mid_cut_img = fibers.reconstruct(rot_angle, rotated_cnt_extremes, folders,
                                                                  unet_parm, part, fiber_min_layers_theshold, resolution)
         if is_connect_fibers:
-            nodes, pairs = fibers.find_connections(fiber_joint_angle, fiber_joint_distance, resolution)
+            fiber_joint_angle_z = math.degrees(math.atan(self.nucleus.nuc_length/(self.nucleus.nuc_high/2))) #Fiber join angle for z axis is calculated based on nucleus height and length so the algorithm considers curve surface of nucleus
+            nodes, pairs = fibers.find_connections(fiber_joint_angle, fiber_joint_angle_z, fiber_joint_distance, resolution)
             nodes_old, pairs_old = fibers.find_connections_old_version(fiber_joint_angle, fiber_joint_distance, resolution)
             if is_connect_fibers:
                 print(f"New approach connection num: {len(pairs)}")

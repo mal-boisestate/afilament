@@ -69,16 +69,26 @@ class SingleFiber(object):
         else:
             self.part = "cap"
 
-    def find_fiber_alignment_angle(self):
+    def find_fiber_alignment_angle(self, axis):
         alignment_pix_num = 30
-        main_line_end_p = (self.xs[-1], self.ys[-1])
-        if self.n < alignment_pix_num:
-            main_line_start_p = (self.xs[0], self.ys[0])
-        else:
-            main_line_start_p = (self.xs[-alignment_pix_num], self.ys[-alignment_pix_num])
-        # angle_sin = (main_line_end_p[1] - main_line_start_p[1]) / cv2.norm(main_line_end_p, main_line_start_p)
-        angle_sin = (main_line_end_p[1] - main_line_start_p[1]) / np.linalg.norm(np.array(main_line_end_p) - np.array(main_line_start_p))
-        rot_angle = - math.degrees(math.asin(angle_sin))
+        rot_angle = 0
+        if axis == "xy":
+            main_line_end_p = (self.xs[-1], self.ys[-1])
+            if self.n < alignment_pix_num:
+                main_line_start_p = (self.xs[0], self.ys[0])
+            else:
+                main_line_start_p = (self.xs[-alignment_pix_num], self.ys[-alignment_pix_num])
+            angle_sin = (main_line_end_p[1] - main_line_start_p[1]) / np.linalg.norm(np.array(main_line_end_p) - np.array(main_line_start_p))
+            rot_angle = - math.degrees(math.asin(angle_sin))
+        elif axis == "xz":
+            main_line_end_p = (self.xs[-1], self.zs[-1])
+            if self.n < alignment_pix_num:
+                main_line_start_p = (self.xs[0], self.zs[0])
+            else:
+                main_line_start_p = (self.xs[-alignment_pix_num], self.zs[-alignment_pix_num])
+            angle_sin = (main_line_end_p[1] - main_line_start_p[1]) / np.linalg.norm(np.array(main_line_end_p) - np.array(main_line_start_p))
+            rot_angle = - math.degrees(math.asin(angle_sin))
+
         return rot_angle
 
     def get_stat(self, resolution):
