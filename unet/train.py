@@ -15,6 +15,8 @@ from torch.utils.tensorboard import SummaryWriter
 from unet.dataset import BasicDataset
 from torch.utils.data import DataLoader, random_split
 
+os.environ["KMP_DUPLICATE_LIB_OK"] ="TRUE"
+
 dir_img = 'data/imgs/'
 dir_mask = 'data/masks/'
 

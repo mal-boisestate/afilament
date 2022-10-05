@@ -13,6 +13,7 @@ from tqdm import tqdm
 from unet import UNet
 from unet.data_vis import plot_img_and_mask
 from unet.dataset import BasicDataset
+os.environ["KMP_DUPLICATE_LIB_OK"] ="TRUE"
 
 
 def predict_img(net,

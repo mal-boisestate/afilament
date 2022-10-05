@@ -2,12 +2,9 @@ import glob
 import os
 import cv2.cv2 as cv2
 import math
-import numpy as np
+import sys
 from afilament.objects import Contour
-from afilament.objects.ConfocalImgReader import ConfocalImgReaderCzi
 import numpy as np
-import skimage.color
-import skimage.io
 import matplotlib.pyplot as plt
 from unet.predict import run_predict_unet
 
@@ -25,6 +22,26 @@ def prepare_folder(folder):
     for f in glob.glob(folder + "/*"):
         os.remove(f)
 
+
+
+
+def find_max_projection(input_folder, identifier, show_img=False):
+    object_layers = []
+    for img_path in glob.glob(os.path.join(input_folder, "*_" + identifier + "_*.png")):
+        layer = int(img_path.rsplit(".", 1)[0].rsplit("_", 1)[1])
+        object_img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+        object_layers.append([object_img, layer])
+
+    object_layers = sorted(object_layers, key=lambda x: x[1], reverse=True)
+    image_3d = np.asarray([img for img, layer in object_layers], dtype=np.uint8)
+    max_projection_origin_size = image_3d[:, :, :].max(axis=0, out=None, keepdims=False, where=True)
+    max_progection_unet_size = cv2.resize(max_projection_origin_size, (512, 512))
+    if show_img:
+        cv2.imshow("Max projection", max_progection_unet_size)
+        cv2.waitKey()
+    return max_projection_origin_size, max_progection_unet_size
+
+
 def find_rotation_angle(input_folder, rotation_trh=50):
     """
     Find rotation angle based on Hough lines of edges of maximum actin projection.
@@ -39,19 +56,7 @@ def find_rotation_angle(input_folder, rotation_trh=50):
         - hough_lines_img (img): image for verification
     """
     identifier = "actin"
-    object_layers = []
-    for img_path in glob.glob(os.path.join(input_folder, "*_" + identifier + "_*.png")):
-        layer = int(img_path.rsplit(".", 1)[0].rsplit("_", 1)[1])
-        object_img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-        object_layers.append([object_img, layer])
-
-    object_layers = sorted(object_layers, key=lambda x: x[1], reverse=True)
-    image_3d = np.asarray([img for img, layer in object_layers], dtype=np.uint8)
-    max_projection = image_3d[:, :, :].max(axis=0, out=None, keepdims=False,  where = True)
-    max_progection_img = cv2.resize(max_projection,(1000, 1000))
-
-    # cv2.imshow("output", cv2.resize(max_progection,(1000, 1000))) #keep it for debugging
-    # cv2.waitKey()
+    max_projection, max_progection_img = find_max_projection(input_folder, identifier)
 
     # Find the edges in the image using canny detector
     edges = cv2.Canny(max_projection, rotation_trh, 100)
@@ -355,4 +360,77 @@ def rotate_point(rotated_point, main_point, rot_angle):
     # return (qx, qy)
 
 
+def normalization(img, norm_th):
+    img[np.where(img > norm_th)] = norm_th
+    img = cv2.normalize(img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
+    return img
 
+
+def get_nuclei_masks(temp_folders, analysis_folder, image_path, nuc_theshold,
+                    nuc_area_min_pixels_num, find_biggest_mode, unet_parm=None):
+
+    img_base_path = os.path.splitext(os.path.basename(image_path))[0]
+    max_projection_origin_size, max_progection_unet_size = find_max_projection(temp_folders["raw"], "nucleus", show_img=False)
+    max_projection_path = os.path.join(temp_folders["nucleus_top_img"], img_base_path + ".png")
+    cv2.imwrite(max_projection_path, max_projection_origin_size)
+    dim = 0
+    cnts = []
+    if find_biggest_mode == "unet":
+        run_predict_unet(temp_folders["nucleus_top_img"], temp_folders["nucleus_top_mask"],
+                         unet_parm.from_top_nucleus_unet_model,
+                         unet_parm.unet_model_scale,
+                         unet_parm.unet_model_thrh)
+        mask_path = os.path.join(temp_folders["nucleus_top_mask"], img_base_path + ".png")
+        mask_img = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
+        kernel = np.ones((5, 5), np.uint8)
+        img_dilation = cv2.dilate(mask_img, kernel, iterations=1)
+        cnts = Contour.get_img_cnts(img_dilation, nuc_theshold)
+        dim = img_dilation.shape
+
+    elif find_biggest_mode == "trh":
+        img_path = os.path.join(temp_folders["nucleus_top_img"], img_base_path + ".png")
+        nucleus_img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+        cnts = Contour.get_img_cnts(nucleus_img, nuc_theshold)
+        dim = nucleus_img.shape
+
+    # Remove nuclei that touch edges of the image
+    cnts = remove_edge_nuc(cnts, dim)
+    cnts = [cnt for cnt in cnts if cv2.contourArea(cnt) > nuc_area_min_pixels_num]  # removes noise
+
+    nuclei_masks = []
+
+    for i, cnt in enumerate(cnts):
+        one_nuc_mask = np.zeros(dim, dtype="uint8")
+        cv2.drawContours(one_nuc_mask, [cnt], -1, color=(255, 255, 255), thickness=cv2.FILLED)
+        one_nuc_mask_path = os.path.join(temp_folders["nuclei_top_masks"], img_base_path + "_" + str(i) +".png")
+        cv2.imwrite(one_nuc_mask_path, one_nuc_mask)
+        nuclei_masks.append(one_nuc_mask)
+
+    draw_and_save_cnts_verification(analysis_folder, image_path, cnts, max_projection_origin_size)
+
+    return nuclei_masks
+
+
+def draw_and_save_cnts_verification(analysis_folder, image_path, cnts, max_progection_img):
+    base_img_name = os.path.splitext(os.path.basename(image_path))[0]
+    ver_img_path = os.path.join(analysis_folder["area_ver"],
+                                                 base_img_name + "_max_projection.png")
+
+    cv2.drawContours(max_progection_img, cnts, -1, (255, 255, 255), 5)
+
+    for i, cnt in enumerate(cnts):
+        org = Contour.get_cnt_center(cnt)
+        cv2.putText(max_progection_img, str(i), org, fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=3, color=(255, 255, 0),
+                    thickness=3)
+    cv2.imwrite(ver_img_path, max_progection_img)
+
+
+def remove_edge_nuc(cnts, img_dim):  # removes cells that touch the edges of the frame
+    max_x, max_y = img_dim
+
+    if max_x != max_y:
+        sys.exit("The current version of the program can analyze only square shape images."
+                 "Please modify remove_edge_cells to overcome this issue.")
+
+    new_cnts = [cnt for cnt in cnts if cnt.max() < max_x - 1 and cnt.min() > 1]
+    return new_cnts
