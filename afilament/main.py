@@ -21,9 +21,9 @@ def main():
     fiber_min_layers_theshold = 10 #in pixels
     node_actin_len_th = 2 #for node creation, do not breake actin if one of the part is too small
 
-    actin_unet_model = r"D:\BioLab\models\actin\CP_epoch200_actin_weight.corection_200_labling_V2.pth"
-    nucleus_unet_model = r"D:\BioLab\models\one_nucleus\CP_epoch50_nucleus_weight.corection_200_labling_WITH_FLAT_Apatome_no_agum_V3.pth"
-    from_top_nucleus_unet_model = r"D:\BioLab\scr_2.0\unet\models\CP_epoch200_max_pr.pth"
+    actin_unet_model = r"../unet/models/CP_epoch200_actin_weight.corection_200_labling_V2.pth"
+    nucleus_unet_model = r"../unet/models/CP_epoch50_nucleus_weight.corection_200_labling_WITH_FLAT_Apatome_no_agum_V3.pth"
+    from_top_nucleus_unet_model = r"../unet/models/CP_epoch200_max_pr.pth"
     unet_model_scale = 1
     unet_img_size = (512, 512)
     unet_model_thrh = 0.5
