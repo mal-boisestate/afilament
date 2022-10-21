@@ -4,7 +4,6 @@ __pycache__/
 checkpoints/
 runs/
 .idea/
-*.pth
 *.pickle
 *.csv
 *.jpg
@@ -14,7 +13,6 @@ runs/
 analysis_data/
 temp/
 **/*.pickle
-**/*.pth
 **/*.jpg
 **/*.png
 **/*.html

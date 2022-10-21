@@ -13,11 +13,11 @@ def main():
     RECALCULATE = True
     img_nums = [0]
     # 2 nuc thershold 30 does not work
-    nucleus_channel = 0  # 1 for original czi file
+    nucleus_channel = 2  # 1 for original czi file
     actin_channel = 1  # 0 for original czi file
     # confocal_img = r"D:\BioLab\cells\Confocal_img\2022.05.25_leica_DAPI_488\2022.05.25_MSC_Control_Series-01-20.lif"
-    confocal_img = r"D:\BioLab\img\Confocal_img\2022.09.21_DAPI_488\different_proprocessing-modes\Experiment-423-ApoTome deconvolution-01.czi"# Path to folder(czi) or file (lif)
-    nuc_theshold = 30
+    confocal_img = r"D:\BioLab\img\Confocal_img\Buer_img\test_run"# Path to folder(czi) or file (lif)
+    nuc_theshold = 60
     fiber_min_layers_theshold = 10 #in pixels
     node_actin_len_th = 2 #for node creation, do not breake actin if one of the part is too small
 
@@ -34,7 +34,7 @@ def main():
     is_auto_normalized = False
     is_connect_fibers = True
     norm_th = 2**16 #when auto chose it will be recalculated format is tuple example (1000, 1000)
-    find_biggest_mode = "unet" #"unet" or "trh"
+    find_biggest_mode = "trh" #"unet" or "trh"
     fiber_joint_angle = 10
     fiber_joint_distance = 50
     nuc_area_min_pixels_num = 200

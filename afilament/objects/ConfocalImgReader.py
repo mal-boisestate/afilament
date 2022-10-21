@@ -259,7 +259,7 @@ class ConfocalImgReader(object):
 
     def normalization(self, img, type):
         img[np.where(img > self.norm_th)] = self.norm_th
-        img = cv2.normalize(img, None, alpha=0, beta=self.norm_th, norm_type=cv2.NORM_MINMAX)
+        # img = cv2.normalize(img, None, alpha=0, beta=self.norm_th, norm_type=cv2.NORM_MINMAX)
 
         if type == 'uint16':
             img = (img / (self.norm_th / math.pow(2, 8))).astype(np.uint8)

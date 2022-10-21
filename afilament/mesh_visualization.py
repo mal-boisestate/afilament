@@ -150,7 +150,7 @@ if __name__ == '__main__':
     file_path=r"D:\BioLab\scr_2.0\afilament\analysis_data\test_cells_bach.pickle"
     # file_path = r"D:\BioLab\Current_experiments\afilament\2022.08.09_very_first_cell_analysis_data\analysis_data\test_cells_bach.pickle"
     cells = pickle.load(open(file_path, "rb"))
-    cell = cells[1]
+    cell = cells[0]
     tmesh = get_nuc_mesh(cell)
     final_mesh = optimize_mesh(tmesh, resolution)
     # fibers, nodes, nodes_point_cloud_scaled = get_nodes(cell, resolution)

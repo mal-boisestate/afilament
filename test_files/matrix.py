@@ -2,8 +2,6 @@ import numpy as np
 import time
 
 
-
-
 A = np.random.random((2000, 1000))
 B = np.random.random((1000, 500))
 start = time.time()
