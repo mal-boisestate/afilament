@@ -58,7 +58,7 @@ def main():
         for img_num in img_nums:
             try:
                         cells = analyser.analyze_img(img_num)
-                        all_cells.extend(cells)
+                        all_cells.extend(cells) #add test comment
             except Exception as e:
                 logger.error(f"\n----------- \n Img #{img_num} from file {confocal_img} was not analysed. "
                                      f"\n Error: {e} \n----------- \n")
