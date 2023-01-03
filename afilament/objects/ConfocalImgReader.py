@@ -4,7 +4,6 @@ import cv2.cv2 as cv2
 import numpy as np
 import math
 from tqdm import tqdm
-from czifile import CziFile
 import glob
 # from readlif.reader import LifFile
 from pathlib import Path
