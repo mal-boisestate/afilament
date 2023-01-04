@@ -58,7 +58,7 @@ class CellAnalyser(object):
         for folder in analysis_data_folders.values():
             Utils.prepare_folder(folder)
 
-    def analyze_cell(self, cell_num, mask, reader):
+    def analyze_cell(self, img_num, cell_num, mask, reader):
         """
         Run analysis of specified cell part, update information in cell and return it
     ---
@@ -68,7 +68,7 @@ class CellAnalyser(object):
         - bottom = True if basal fibers should be analysed separately False otherwise
 
         """
-        cell = Cell(cell_num)
+        cell = Cell(img_num, cell_num)
         self._run_analysis(cell, "whole", mask, reader)
         if self.is_separate_cap_bottom:
             self._run_analysis(cell, "cap", mask, reader)
@@ -110,7 +110,7 @@ class CellAnalyser(object):
 
         cells = []
         for i, nuc_mask in enumerate(nuclei_masks):
-            cell = self.analyze_cell(i, nuc_mask, reader)
+            cell = self.analyze_cell(img_num, i, nuc_mask, reader)
             cells.append(cell)
         return cells
 
@@ -197,25 +197,34 @@ class CellAnalyser(object):
         """
         for cell in cells:
             # save actin fiber statistics
-            actin_stat_total_file_path = os.path.join(analysis_data_folders["actin_stat"], str(cell.number) + "_cell_actin_stat.csv")
+            actin_stat_total_file_path = os.path.join(analysis_data_folders["actin_stat"],
+                                                      "cell_num_" + str(cell.number) + "img_num_" + str(cell.img_number)
+                                                      + "_cell_actin_stat.csv")
             cell.actin_total.save_each_fiber_stat(self.img_resolution, actin_stat_total_file_path)
             actin_object_total = os.path.join(analysis_data_folders["actin_objects"],
-                                              str(cell.number) + "_cell_3d_actin.obj")
+                                              "cell_num_" + str(cell.number) + "img_num_" + str(cell.img_number)
+                                              + "_cell_3d_actin.obj")
             with open(actin_object_total, "wb") as file_to_save:
                 pickle.dump(cell.actin_total, file_to_save)
 
             if self.is_separate_cap_bottom:
-                actin_stat_cap_file_path = os.path.join(analysis_data_folders["actin_stat"], str(cell.number) + "_cap_actin_stat.csv")
+                actin_stat_cap_file_path = os.path.join(analysis_data_folders["actin_stat"],
+                                                        "cell_num_" + str(cell.number) + "img_num_" + str(cell.img_number)
+                                                        + "_cap_actin_stat.csv")
                 cell.actin_cap.save_each_fiber_stat(self.img_resolution, actin_stat_cap_file_path)
                 actin_object_cap = os.path.join(analysis_data_folders["actin_objects"],
-                                                str(cell.number) + "_cap_3d_actin.obj")
+                                                "cell_num_" + str(cell.number) + "img_num_" + str(cell.img_number)
+                                                + "_cap_3d_actin.obj")
                 with open(actin_object_cap, "wb") as file_to_save:
                     pickle.dump(cell.actin_cap, file_to_save)
 
-                actin_stat_bottom_file_path = os.path.join(analysis_data_folders["actin_stat"], str(cell.number) + "_bottom_actin_stat.csv")
+                actin_stat_bottom_file_path = os.path.join(analysis_data_folders["actin_stat"],
+                                                           "cell_num_" + str(cell.number) + "img_num_" + str(cell.img_number)
+                                                           + "_bottom_actin_stat.csv")
                 cell.actin_bottom.save_each_fiber_stat(self.img_resolution, actin_stat_bottom_file_path)
                 actin_object_bottom = os.path.join(analysis_data_folders["actin_objects"],
-                                                   str(cell.number) + "_bottom_3d_actin.obj")
+                                                   "cell_num_" + str(cell.number) + "img_num_" + str(cell.img_number)
+                                                   + "_bottom_3d_actin.obj")
                 with open(actin_object_bottom, "wb") as file_to_save:
                     pickle.dump(cell.actin_bottom, file_to_save)
 
@@ -225,6 +234,7 @@ class CellAnalyser(object):
         Save aggregated statistical data in the file specified in folders["agreg_stat"] list
         Each raw of this file represent a cell, colums names are:
         - "Image_name"
+        - "Image_number"
         - "Cell_num"
         - "Nucleus_volume, cubic_micrometre"
         - "Nucleus_length, micrometre",
@@ -240,8 +250,8 @@ class CellAnalyser(object):
         - "Bottom_fiber_length, micrometre"
         """
         if self.is_separate_cap_bottom:
-            header_row = ["Image_name", "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre",
-                          "Nucleus_width, micrometre",
+            header_row = ["Image_name", "Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre",
+                          "Nucleus_length, micrometre", "Nucleus_width, micrometre",
                           "Nucleus_high, micrometre", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num",
                           "Total_fiber_volume, cubic_micrometre",
                           "Cap_fiber_volume, cubic_micrometre", "Bottom_fiber_volume, cubic_micrometre",
@@ -258,7 +268,7 @@ class CellAnalyser(object):
                 for cell in cells:
                     csv_writer.writerow([str(self.confocal_path)] + cell.get_aggregated_cell_stat(self.is_separate_cap_bottom))
         else:
-            header_row = ["Image_name", "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre",
+            header_row = ["Image_name","Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre",
                           "Nucleus_width, micrometre",
                           "Nucleus_high, micrometre", "Total_fiber_num",
                           "Total_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",

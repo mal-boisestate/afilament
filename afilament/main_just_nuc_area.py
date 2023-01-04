@@ -11,12 +11,12 @@ import logging
 
 def main():
     RECALCULATE = True
-    img_nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    img_nums = [0, 4]
     # 2 nuc thershold 30 does not work
     nucleus_channel = 0  # 1 for original czi file
     actin_channel = 1 # 0 for original czi file
     # confocal_img = r"D:\BioLab\cells\Confocal_img\2022.05.25_leica_DAPI_488\2022.05.25_MSC_Control_Series-01-20.lif"
-    confocal_img = r"D:\BioLab\img\Confocal_img\2022.10.19_leica_DAPI_488\2022.10.19_MSC_6xLIV_10_img_32_cells.lif" # Path to folder(czi) or file (lif)
+    confocal_img = r"F:\Nina_Docs\Img\Confocal\2022.10.19_MSC_6xLIV_10_img_32_cells.lif" # Path to folder(czi) or file (lif)
     nuc_theshold = 10
     fiber_min_layers_theshold = 10 #in pixels
     node_actin_len_th = 2 #for node creation, do not breake actin if one of the part is too small
