@@ -76,6 +76,21 @@ class CellAnalyser(object):
 
         return cell
 
+
+    def save_nuc_verification(self, img_num):
+        """
+        Save nucleus area verificatin imagies. This function is helpful to verify different settings
+        """
+        for folder in temp_folders.values():
+            Utils.prepare_folder(folder)
+
+        reader = ConfocalImgReader(self.confocal_path, self.nucleus_channel, self.actin_channel, img_num, self.norm_th)
+        self.img_resolution = reader.img_resolution
+        reader.read(temp_folders["raw"], "whole")
+        Utils.get_nuclei_masks(temp_folders, analysis_data_folders,
+                               reader.image_path, self.nuc_theshold, self.nuc_area_min_pixels_num,
+                               self.find_biggest_mode, img_num, self.unet_parm)
+
     def analyze_img(self, img_num):
         """
         Run analysis of the image. Finds all nuclei on the image
@@ -91,7 +106,8 @@ class CellAnalyser(object):
         reader.read(temp_folders["raw"], "whole")
         nuclei_masks = Utils.get_nuclei_masks(temp_folders, analysis_data_folders,
                                              reader.image_path, self.nuc_theshold, self.nuc_area_min_pixels_num,
-                                             self.find_biggest_mode, self.unet_parm)
+                                             self.find_biggest_mode, img_num, self.unet_parm)
+
         cells = []
         for i, nuc_mask in enumerate(nuclei_masks):
             cell = self.analyze_cell(i, nuc_mask, reader)

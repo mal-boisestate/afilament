@@ -367,7 +367,7 @@ def normalization(img, norm_th):
 
 
 def get_nuclei_masks(temp_folders, analysis_folder, image_path, nuc_theshold,
-                    nuc_area_min_pixels_num, find_biggest_mode, unet_parm=None):
+                    nuc_area_min_pixels_num, find_biggest_mode, img_num, unet_parm=None):
 
     img_base_path = os.path.splitext(os.path.basename(image_path))[0]
     max_projection_origin_size, max_progection_unet_size = find_max_projection(temp_folders["raw"], "nucleus", show_img=False)
@@ -406,15 +406,15 @@ def get_nuclei_masks(temp_folders, analysis_folder, image_path, nuc_theshold,
         cv2.imwrite(one_nuc_mask_path, one_nuc_mask)
         nuclei_masks.append(one_nuc_mask)
 
-    draw_and_save_cnts_verification(analysis_folder, image_path, cnts, max_projection_origin_size)
+    draw_and_save_cnts_verification(analysis_folder, image_path, cnts, max_projection_origin_size, img_num)
 
     return nuclei_masks
 
 
-def draw_and_save_cnts_verification(analysis_folder, image_path, cnts, max_progection_img):
+def draw_and_save_cnts_verification(analysis_folder, image_path, cnts, max_progection_img, img_num):
     base_img_name = os.path.splitext(os.path.basename(image_path))[0]
     ver_img_path = os.path.join(analysis_folder["area_ver"],
-                                                 base_img_name + "_max_projection.png")
+                                                 base_img_name + "_img-num_" + str(img_num) + "_max_projection.png")
 
     cv2.drawContours(max_progection_img, cnts, -1, (255, 255, 255), 5)
 
