@@ -23,8 +23,6 @@ def prepare_folder(folder):
         os.remove(f)
 
 
-
-
 def find_max_projection(input_folder, identifier, show_img=False):
     object_layers = []
     for img_path in glob.glob(os.path.join(input_folder, "*_" + identifier + "_*.png")):
@@ -62,7 +60,7 @@ def find_rotation_angle(input_folder, rotation_trh=50):
     edges = cv2.Canny(max_projection, rotation_trh, 100)
 
     # Detect points that form a line
-    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold = 15, minLineLength=50, maxLineGap=250)
+    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=15, minLineLength=50, maxLineGap=250)
 
     # Draw lines on the image
     angles = []
@@ -77,10 +75,10 @@ def find_rotation_angle(input_folder, rotation_trh=50):
             if x1 == x2:
                 angles.append(-90)
             else:
-                angles.append(np.arctan((y2-y1)/(x2 - x1)) * 180/np.pi)
+                angles.append(np.arctan((y2 - y1) / (x2 - x1)) * 180 / np.pi)
         # Create window with freedom of dimensions
         rot_angle = (np.median(angles))
-        hough_lines_img = cv2.resize(max_projection,(1000, 1000))
+        hough_lines_img = cv2.resize(max_projection, (1000, 1000))
         # cv2.imshow("output", cv2.resize(max_progection,(1000, 1000))) #keep it for debugging
         # cv2.waitKey()
 
@@ -143,11 +141,12 @@ def rotate_and_get_3D(input_folder, identifier, rot_angle):
     image_3d = np.asarray([img for img, layer in object_layers], dtype=np.uint8)
     max_progection = image_3d[:, :, :].max(axis=0, out=None, keepdims=False, where=True)
     max_progection_img = cv2.resize(max_progection, (1000, 1000))
-    image_3d = np.moveaxis(image_3d, 0, -1) #Before moving axis (z, x, y), after moving axis (x, y, z)
+    image_3d = np.moveaxis(image_3d, 0, -1)  # Before moving axis (z, x, y), after moving axis (x, y, z)
 
     return image_3d, max_progection_img
 
-def get_yz_xsection(img_3d, output_folder, identifier, cnt_extremes, unet_img_size = 512):
+
+def get_yz_xsection(img_3d, output_folder, identifier, cnt_extremes, unet_img_size=512):
     """
     Save jpg cross-section of img_3d with padding in output_folder.
     ---
@@ -166,7 +165,7 @@ def get_yz_xsection(img_3d, output_folder, identifier, cnt_extremes, unet_img_si
     top, bottom = cnt_extremes.top[1], cnt_extremes.bottom[1]
     x_start, x_end, step = cnt_extremes.left[0], cnt_extremes.right[0], 1
     x_middle = x_start + (x_end - x_start) // 2
-    mid_cut = None #saved later for verification
+    mid_cut = None  # saved later for verification
     x_xsection_start, x_section_end = 0, 0
     for x_slice in range(x_start, x_end, step):
         xsection = img_3d[top: bottom, x_slice, :]
@@ -217,24 +216,30 @@ def get_3d_img(input_folder):
 
     return img_3d
 
-def save_rotation_verification(cell, max_progection_img, hough_lines_img, rotated_max_projection, mid_cut_img, part, folders):
+
+def save_rotation_verification(cell, max_progection_img, hough_lines_img, rotated_max_projection, mid_cut_img, part,
+                               folders):
     """
     Save images in specify folder
     ---
     """
     max_projection_init_file_path = os.path.join(folders["rotatation_verification"],
-                                                str(cell.number) + "_" + part + "_max_projection_initial.png")
+                                                 "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
+                                                 + "_" + part + "_max_projection_initial.png")
     max_projection_rotated_file_path = os.path.join(folders["rotatation_verification"],
-                                                str(cell.number) + "_" + part + "_max_projection_rotated.png")
+                                                    "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
+                                                    + "_" + part + "_max_projection_rotated.png")
     hough_lines_file_path = os.path.join(folders["rotatation_verification"],
-                                                str(cell.number) + "_" + part + "_hough_lines.png")
+                                         "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
+                                         + "_" + part + "_hough_lines.png")
     cv2.imwrite(max_projection_init_file_path, max_progection_img)
     cv2.imwrite(max_projection_rotated_file_path, rotated_max_projection)
     cv2.imwrite(hough_lines_file_path, hough_lines_img)
 
     # save cross section for verification
     middle_xsection_file_path = os.path.join(folders["middle_xsection"],
-                                                str(cell.number) + "_" + part + "_middle_xsection.png")
+                                             "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
+                                             + "_" + part + "_middle_xsection.png")
     cv2.imwrite(middle_xsection_file_path, mid_cut_img)
 
 
@@ -303,8 +308,9 @@ def сut_out_mask(mask, input_folder, output_folder, identifier):
     image_3d = np.moveaxis(image_3d, 0, -1)
     return image_3d
 
+
 def plot_histogram(title, image):
-    histogram, bin_edges = np.histogram(image, bins=256*256)
+    histogram, bin_edges = np.histogram(image, bins=256 * 256)
     plt.figure()
     plt.title(title)
     plt.xlabel("grayscale value")
@@ -313,17 +319,21 @@ def plot_histogram(title, image):
     plt.plot(histogram)  # <- or here
     plt.show()
 
-def is_point_in_pyramid_old_version (x, y, z, x_test, y_test, z_test, con_angle, min_len, resolution):
+
+def is_point_in_pyramid_old_version(x, y, z, x_test, y_test, z_test, con_angle, min_len, resolution):
     is_x_in_pyramid = x_test < x + min_len
     # Find y frame based on known angle and the height of the triangle (con_angle)
     sin = math.sin(math.radians(con_angle))
     y_frame = abs(sin * (x - x_test))
     is_y_in_pyramid = y - y_frame <= y_test <= y + y_frame
-    z_frame = int(y_frame * (resolution.y / resolution.z))  #Since pixel size is different for xy and xz planes, adjustment should be done
+    z_frame = int(y_frame * (
+                resolution.y / resolution.z))  # Since pixel size is different for xy and xz planes, adjustment should be done
     is_z_in_pyramid = z - z_frame <= z_test <= z + z_frame
     return is_x_in_pyramid and is_y_in_pyramid and is_z_in_pyramid
 
-def is_point_in_pyramid(right_rotated_xy, right_rotated_xz, left_rotated_xy, left_rotated_xz, con_angle, con_angle_z, min_len, resolution):
+
+def is_point_in_pyramid(right_rotated_xy, right_rotated_xz, left_rotated_xy, left_rotated_xz, con_angle, con_angle_z,
+                        min_len, resolution):
     x_y, y = right_rotated_xy
     x_y_test, y_test = left_rotated_xy
     x_z, z = right_rotated_xz
@@ -334,7 +344,8 @@ def is_point_in_pyramid(right_rotated_xy, right_rotated_xz, left_rotated_xy, lef
     sin_z = math.sin(math.radians(con_angle_z))
     y_frame = abs(sin * (x_y - x_y_test))
     is_y_in_pyramid = y - y_frame <= y_test <= y + y_frame
-    z_frame = int(abs(sin_z * (x_z - x_z_test)) * (resolution.y / resolution.z)) #Since pixel size is different for xy and xz planes, adjustment should be done
+    z_frame = int(abs(sin_z * (x_z - x_z_test)) * (
+                resolution.y / resolution.z))  # Since pixel size is different for xy and xz planes, adjustment should be done
     is_x_z_in_pyramid = x_z_test < x_z + min_len
     is_z_in_pyramid = z - z_frame <= z_test <= z + z_frame
     return is_x_y_in_pyramid and is_y_in_pyramid and is_x_z_in_pyramid and is_z_in_pyramid
@@ -349,8 +360,9 @@ def rotate_point(rotated_point, main_point, rot_angle):
     """
     x = rotated_point[0] - main_point[0]
     y = rotated_point[1] - main_point[1]
-    new_coordinates = (int(main_point[0] + x * math.cos(math.radians(rot_angle)) - y * math.sin(math.radians(rot_angle))),
-                       int(main_point[1] + x * math.sin(math.radians(rot_angle)) + y * math.cos(math.radians(rot_angle))))
+    new_coordinates = (
+    int(main_point[0] + x * math.cos(math.radians(rot_angle)) - y * math.sin(math.radians(rot_angle))),
+    int(main_point[1] + x * math.sin(math.radians(rot_angle)) + y * math.cos(math.radians(rot_angle))))
     return new_coordinates
     # ox, oy = main_point
     # px, py = rotated_point
@@ -367,10 +379,10 @@ def normalization(img, norm_th):
 
 
 def get_nuclei_masks(temp_folders, analysis_folder, image_path, nuc_theshold,
-                    nuc_area_min_pixels_num, find_biggest_mode, img_num, unet_parm=None):
-
+                     nuc_area_min_pixels_num, find_biggest_mode, img_num, unet_parm=None):
     img_base_path = os.path.splitext(os.path.basename(image_path))[0]
-    max_projection_origin_size, max_progection_unet_size = find_max_projection(temp_folders["raw"], "nucleus", show_img=False)
+    max_projection_origin_size, max_progection_unet_size = find_max_projection(temp_folders["raw"], "nucleus",
+                                                                               show_img=False)
     max_projection_path = os.path.join(temp_folders["nucleus_top_img"], img_base_path + ".png")
     cv2.imwrite(max_projection_path, max_projection_origin_size)
     dim = 0
@@ -402,7 +414,7 @@ def get_nuclei_masks(temp_folders, analysis_folder, image_path, nuc_theshold,
     for i, cnt in enumerate(cnts):
         one_nuc_mask = np.zeros(dim, dtype="uint8")
         cv2.drawContours(one_nuc_mask, [cnt], -1, color=(255, 255, 255), thickness=cv2.FILLED)
-        one_nuc_mask_path = os.path.join(temp_folders["nuclei_top_masks"], img_base_path + "_" + str(i) +".png")
+        one_nuc_mask_path = os.path.join(temp_folders["nuclei_top_masks"], img_base_path + "_" + str(i) + ".png")
         cv2.imwrite(one_nuc_mask_path, one_nuc_mask)
         nuclei_masks.append(one_nuc_mask)
 
@@ -414,7 +426,7 @@ def get_nuclei_masks(temp_folders, analysis_folder, image_path, nuc_theshold,
 def draw_and_save_cnts_verification(analysis_folder, image_path, cnts, max_progection_img, img_num):
     base_img_name = os.path.splitext(os.path.basename(image_path))[0]
     ver_img_path = os.path.join(analysis_folder["area_ver"],
-                                                 base_img_name + "_img-num_" + str(img_num) + "_max_projection.png")
+                                base_img_name + "_img-num_" + str(img_num) + "_max_projection.png")
 
     cv2.drawContours(max_progection_img, cnts, -1, (255, 255, 255), 5)
 

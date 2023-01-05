@@ -202,7 +202,6 @@ class Fibers(object):
             plt.title(f"Single fibers \n {user_title}")
             plt.show()
 
-
     def find_connections(self, pyramid_apex_angle, fiber_joint_angle_z, max_distance, resolution):
         """
         Join fibers if, based on the analysis, fibers look like segments of one fiber:

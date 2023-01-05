@@ -214,12 +214,15 @@ class ConfocalImgReader(object):
                 "cap" - analyze 1/2 upper part of the cell that we consider as an actin cap
                 "bottom" -  analyze 1/2 of the bottom part the we consider as a bottom
         """
-        z_layers_num = self.metadata_obj.image(self.series - 1).Pixels.get_SizeZ()
-        edge = math.ceil(z_layers_num * 1 / 2)  # image_arrays.shape[2] is z stack for apotome czi
+
 
 
         nucleus_img_stack = self._get_img_stack(bio_structure="nucleus")
         actin_img_stack = self._get_img_stack(bio_structure="actin")
+
+        z_layers_num = len(nucleus_img_stack)
+        edge = math.ceil(z_layers_num * 1 / 2)  # image_arrays.shape[2] is z stack for apotome czi
+
         if part == "cap":
             nucleus_img_stack = nucleus_img_stack[0:edge]
             actin_img_stack = actin_img_stack[0:edge]

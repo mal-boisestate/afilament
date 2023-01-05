@@ -197,32 +197,32 @@ class CellAnalyser(object):
         for cell in cells:
             # save actin fiber statistics
             actin_stat_total_file_path = os.path.join(analysis_data_folders["actin_stat"],
-                                                      "cell_num_" + str(cell.number) + "img_num_" + str(cell.img_number)
-                                                      + "_cell_actin_stat.csv")
+                                                      "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
+                                                      + "_whole_actin_stat.csv")
             cell.actin_total.save_each_fiber_stat(self.img_resolution, actin_stat_total_file_path)
             actin_object_total = os.path.join(analysis_data_folders["actin_objects"],
-                                              "cell_num_" + str(cell.number) + "img_num_" + str(cell.img_number)
-                                              + "_cell_3d_actin.obj")
+                                              "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
+                                              + "_whole_3d_actin.obj")
             with open(actin_object_total, "wb") as file_to_save:
                 pickle.dump(cell.actin_total, file_to_save)
 
             if self.is_separate_cap_bottom:
                 actin_stat_cap_file_path = os.path.join(analysis_data_folders["actin_stat"],
-                                                        "cell_num_" + str(cell.number) + "img_num_" + str(cell.img_number)
+                                                        "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
                                                         + "_cap_actin_stat.csv")
                 cell.actin_cap.save_each_fiber_stat(self.img_resolution, actin_stat_cap_file_path)
                 actin_object_cap = os.path.join(analysis_data_folders["actin_objects"],
-                                                "cell_num_" + str(cell.number) + "img_num_" + str(cell.img_number)
+                                                "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
                                                 + "_cap_3d_actin.obj")
                 with open(actin_object_cap, "wb") as file_to_save:
                     pickle.dump(cell.actin_cap, file_to_save)
 
                 actin_stat_bottom_file_path = os.path.join(analysis_data_folders["actin_stat"],
-                                                           "cell_num_" + str(cell.number) + "img_num_" + str(cell.img_number)
+                                                           "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
                                                            + "_bottom_actin_stat.csv")
                 cell.actin_bottom.save_each_fiber_stat(self.img_resolution, actin_stat_bottom_file_path)
                 actin_object_bottom = os.path.join(analysis_data_folders["actin_objects"],
-                                                   "cell_num_" + str(cell.number) + "img_num_" + str(cell.img_number)
+                                                   "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
                                                    + "_bottom_3d_actin.obj")
                 with open(actin_object_bottom, "wb") as file_to_save:
                     pickle.dump(cell.actin_bottom, file_to_save)

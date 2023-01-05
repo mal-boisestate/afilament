@@ -1,7 +1,6 @@
 import os
 import cv2.cv2 as cv2
 import numpy as np
-from pathlib import Path
 import math
 
 from afilament.objects import Utils
@@ -75,12 +74,8 @@ class Nucleus(object):
 
                 points.extend([[x, y, z] for x, y, z in
                                zip([slice] * len(cnt_ys), cnt_ys, cnt_zs)])
-                path = os.path.join(analysis_folder, 'nucleus_points_coordinates.csv')
-
-        np.savetxt(path, np.array(points, dtype=int), delimiter=",", fmt="%10.0f")
 
         print("Nucleus volume: {}".format(volume))
-
 
         # TODO: to print out nucleus data commented this out
         # ax = plt.axes(projection='3d')
