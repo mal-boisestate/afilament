@@ -1,11 +1,13 @@
 import pickle
 import os
 import csv
-from pathlib import Path
+import json
+
 from afilament.objects import Utils
-from afilament.objects.ConfocalImgReader import ConfocalImgReaderCzi, ConfocalImgReader
+from afilament.objects.ConfocalImgReader import ConfocalImgReader
 from afilament.objects import Contour
 from afilament.objects.Cell import Cell
+from afilament.objects.Parameters import UnetParam
 
 temp_folders = {
     "raw": 'temp/czi_layers',
@@ -31,29 +33,26 @@ analysis_data_folders = {
 
 
 class CellAnalyser(object):
-    def __init__(self, nucleus_channel, actin_channel, confocal_path,
-                 nuc_theshold, unet_parm, fiber_min_layers_theshold, node_actin_len_th,
-                 is_plot_fibers, is_plot_nodes, is_auto_normalize=False,
-                 norm_th=None, find_biggest_mode="trh",
-                 is_separate_cap_bottom=False, is_connect_fibers=True,
-                 fiber_joint_angle=30, fiber_joint_distance=150, nuc_area_min_pixels_num=200):
-        self.nucleus_channel = nucleus_channel
-        self.actin_channel = actin_channel
-        self.confocal_path = confocal_path
-        self.nuc_theshold = nuc_theshold
-        self.unet_parm = unet_parm
-        self.fiber_min_layers_theshold = fiber_min_layers_theshold
-        self.node_actin_len_th = node_actin_len_th
-        self.is_plot_fibers = is_plot_fibers
-        self.is_plot_nodes = is_plot_nodes
-        self.norm_th = norm_th
-        self.find_biggest_mode = find_biggest_mode #"unet" for U-Net mode or "trh" for trh mode
+    def __init__(self, config):
+        self.initial_conf = config
+        self.nucleus_channel = config.nucleus_channel
+        self.actin_channel = config.actin_channel
+        self.confocal_path = config.confocal_img
+        self.nuc_theshold = config.nuc_theshold
+        self.unet_parm = UnetParam(config)
+        self.fiber_min_layers_theshold = config.fiber_min_layers_theshold
+        self.node_actin_len_th = config.node_actin_len_th
+        self.is_plot_fibers = config.is_plot_fibers
+        self.is_plot_nodes = config.is_plot_nodes
+        self.norm_th = config.norm_th
+        self.find_biggest_mode = config.find_biggest_mode #"unet" for U-Net mode or "trh" for trh mode
         self.img_resolution = None
-        self.is_separate_cap_bottom = is_separate_cap_bottom
-        self.is_connect_fibers = is_connect_fibers
-        self.fiber_joint_angle = fiber_joint_angle
-        self.fiber_joint_distance = fiber_joint_distance
-        self.nuc_area_min_pixels_num = nuc_area_min_pixels_num
+        self.is_separate_cap_bottom = config.is_separate_cap_bottom
+        self.is_connect_fibers = config.is_connect_fibers
+        self.fiber_joint_angle = config.fiber_joint_angle
+        self.fiber_joint_distance = config.fiber_joint_distance
+        self.nuc_area_min_pixels_num = config.nuc_area_min_pixels_num
+        self.is_auto_normalize = config.is_auto_normalized
 
         for folder in analysis_data_folders.values():
             Utils.prepare_folder(folder)
@@ -281,4 +280,18 @@ class CellAnalyser(object):
                     csv_writer.writerow([str(self.confocal_path)] + cell.get_aggregated_cell_stat(self.is_separate_cap_bottom))
 
         print("Stat created")
+
+    def save_config(self):
+        # Serializing json
+        json_conf_str = json.dumps(self.initial_conf, indent=4, default=lambda o: o.__dict__,
+            sort_keys=True)
+
+        # Writing to sample.json
+        file_path = os.path.join(analysis_data_folders["analysis"], "analysis_configurations.json")
+        with open(file_path, "w") as outfile:
+            outfile.write(json_conf_str)
+
+
+
+
 

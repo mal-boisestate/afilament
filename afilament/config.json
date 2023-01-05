@@ -1,0 +1,27 @@
+{
+  "confocal_img": "D:\\BioLab\\img\\Confocal_img\\2022.10.19_leica_DAPI_488\\2022.10.19_MSC_6xLIV_10_img_32_cells.lif",
+  "nucleus_channel": 0 ,
+  "actin_channel": 1,
+
+  "actin_unet_model": "../unet/models/CP_epoch200_actin_weight.corection_200_labling_V2.pth",
+  "nucleus_unet_model": "../unet/models/CP_epoch50_nucleus_weight.corection_200_labling_WITH_FLAT_Apatome_no_agum_V3.pth",
+  "from_top_nucleus_unet_model": "../unet/models/CP_epoch200_max_pr.pth",
+  "unet_model_scale":1,
+  "unet_model_thrh": 0.5,
+
+  "is_plot_fibers": false,
+  "is_plot_nodes": false,
+  "is_separate_cap_bottom": true,
+  "is_auto_normalized": false,
+  "is_connect_fibers": false,
+
+  "norm_th": 65000,
+  "find_biggest_mode": "unet",
+  "nuc_theshold": 10,
+  "nuc_area_min_pixels_num": 3000,
+
+  "fiber_joint_angle": 10,
+  "fiber_joint_distance": 50,
+  "fiber_min_layers_theshold": 10,
+  "node_actin_len_th": 2
+}
