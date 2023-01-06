@@ -43,7 +43,7 @@ class Cell(object):
 
     def analyze_actin_fibers(self, rot_angle, rotated_cnt_extremes, folders, unet_parm, part,
                              fiber_min_layers_theshold, resolution, is_plot_fibers, is_connect_fibers,
-                             fiber_joint_angle, fiber_joint_distance):
+                             fiber_joint_angle, fiber_joint_distance, cap_bottom_ratio):
         """
         Run fibers analysis based on part and save results in cell (self) object
         ---
@@ -59,7 +59,8 @@ class Cell(object):
         """
         fibers = Fibers(part)
         rotated_max_projection, mid_cut_img = fibers.reconstruct(rot_angle, rotated_cnt_extremes, folders,
-                                                                 unet_parm, part, fiber_min_layers_theshold, resolution)
+                                                                 unet_parm, part, fiber_min_layers_theshold,
+                                                                 resolution, cap_bottom_ratio)
         if is_connect_fibers:
             fiber_joint_angle_z = math.degrees(math.atan(self.nucleus.nuc_length/(self.nucleus.nuc_high/2))) #Fiber join angle for z axis is calculated based on nucleus height and length so the algorithm considers curve surface of nucleus
             nodes, pairs = fibers.find_connections(fiber_joint_angle, fiber_joint_angle_z, fiber_joint_distance, resolution)

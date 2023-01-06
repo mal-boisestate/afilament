@@ -52,7 +52,9 @@ class CellAnalyser(object):
         self.fiber_joint_angle = config.fiber_joint_angle
         self.fiber_joint_distance = config.fiber_joint_distance
         self.nuc_area_min_pixels_num = config.nuc_area_min_pixels_num
+        self.cap_bottom_ratio = config.cap_bottom_ratio
         self.is_auto_normalize = config.is_auto_normalized
+
 
         for folder in analysis_data_folders.values():
             Utils.prepare_folder(folder)
@@ -84,7 +86,6 @@ class CellAnalyser(object):
             Utils.prepare_folder(folder)
 
         reader = ConfocalImgReader(self.confocal_path, self.nucleus_channel, self.actin_channel, img_num, self.norm_th)
-        self.img_resolution = reader.img_resolution
         reader.read(temp_folders["raw"], "whole")
         Utils.get_nuclei_masks(temp_folders, analysis_data_folders,
                                reader.image_path, self.nuc_theshold, self.nuc_area_min_pixels_num,
@@ -182,8 +183,9 @@ class CellAnalyser(object):
             length = (rotated_cnt_extremes.right[0] - rotated_cnt_extremes.left[0]) * self.img_resolution.x
         rotated_max_projection, mid_cut_img = cell.analyze_actin_fibers(rot_angle, rotated_cnt_extremes, temp_folders,
                                                                         self.unet_parm, part, self.fiber_min_layers_theshold,
-                                                                        self.img_resolution, self.is_plot_fibers, self.is_connect_fibers,
-                                                                        self.fiber_joint_angle, self.fiber_joint_distance)
+                                                                        self.img_resolution, self.is_plot_fibers,
+                                                                        self.is_connect_fibers, self.fiber_joint_angle,
+                                                                        self.fiber_joint_distance, self.cap_bottom_ratio)
         cell.find_branching(part, self.node_actin_len_th, self.is_plot_nodes)
         Utils.save_rotation_verification(cell, max_progection_img, hough_lines_img, rotated_max_projection, mid_cut_img,
                                          part, analysis_data_folders)

@@ -3,7 +3,7 @@ from afilament.objects.Parameters import TestStructure
 from afilament.objects.Fibers import Fibers
 
 if __name__ == '__main__':
-    actin_obj= pickle.load(open(r"D:\BioLab\scr_2.0\afilament\analysis_data\actin_objects\img_num_0__cell_num_0_bottom_3d_actin.obj", "rb"))
+    actin_obj= pickle.load(open(r"D:\BioLab\scr_2.0\afilament\analysis_data\actin_objects\img_num_0__cell_num_1_whole_3d_actin.obj", "rb"))
     # test_structure = pickle.load(open('test_structure.pickle', "rb"))
     actin_obj.plot()
     a = 1

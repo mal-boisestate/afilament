@@ -1,5 +1,5 @@
 {
-  "confocal_img": "D:\\BioLab\\img\\Confocal_img\\2022.10.19_leica_DAPI_488\\2022.10.19_MSC_6xLIV_10_img_32_cells.lif",
+  "confocal_img": "D:\\BioLab\\img\\Confocal_img\\2022.10.19_leica_DAPI_488\\2022.10.19_MSC_Contol_10_img_37_cells.lif",
   "nucleus_channel": 0 ,
   "actin_channel": 1,
 
@@ -11,14 +11,15 @@
 
   "is_plot_fibers": false,
   "is_plot_nodes": false,
-  "is_separate_cap_bottom": true,
   "is_auto_normalized": false,
   "is_connect_fibers": false,
+  "is_separate_cap_bottom": true,
+  "cap_bottom_ratio": 0.4,
 
-  "norm_th": 65000,
-  "find_biggest_mode": "unet",
+  "norm_th": 65536,
+  "find_biggest_mode": "trh",
   "nuc_theshold": 10,
-  "nuc_area_min_pixels_num": 3000,
+  "nuc_area_min_pixels_num": 30000,
 
   "fiber_joint_angle": 10,
   "fiber_joint_distance": 50,

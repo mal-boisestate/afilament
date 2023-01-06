@@ -34,7 +34,7 @@ class SingleFiber(object):
         points = np.asarray([[x, y] for x, y in zip(self.xs, self.ys)])
         self.line = np.squeeze(cv2.fitLine(points, cv2.DIST_L2, 0, 0.01, 0.01))
 
-    def assign_cap_or_bottom(self, z_start, z_end):
+    def assign_cap_or_bottom(self, z_start, z_end, cut_off_coef):
         """
         Check if the fiber is apical (cap) or basal (bottom) based on the mean/median of z coordinates of the given fiber.
         If the mean/median z is located in the upper cut_off_coef part, fiber is apical (cap); otherwise, the fiber is basal(bottom)
@@ -61,7 +61,6 @@ class SingleFiber(object):
         """
         mean_z = mean(self.zs)
         median_z = median(self.zs)
-        cut_off_coef = 0.5
         cut_off_coordinate = (z_start + (z_end - z_start) * cut_off_coef)
         print(f"start is {z_start}, end is {z_end}\n")
         if median_z <= cut_off_coordinate:

@@ -130,7 +130,8 @@ class Fibers(object):
 
         return actin_fibers_filtered
 
-    def reconstruct(self, rot_angle, cnt_extremes, folders, unet_parm, part, fiber_min_layers_theshold, resolution):
+    def reconstruct(self, rot_angle, cnt_extremes, folders, unet_parm,
+                    part, fiber_min_layers_theshold, resolution, cap_bottom_ratio):
         """
         Reconstruct fibers and saves all stat info into this Fibers objects
         ---
@@ -159,7 +160,7 @@ class Fibers(object):
         actin_fibers = self._get_actin_fibers(fibers_3D_mask, fiber_min_layers_theshold)
         if part == "cap" or part == "bottom":
             for fiber in actin_fibers:
-                fiber.assign_cap_or_bottom(z_start, z_end)
+                fiber.assign_cap_or_bottom(z_start, z_end, cap_bottom_ratio)
             filtered_actin_fibers = [fiber for fiber in actin_fibers if fiber.part == part]
             actin_fibers = filtered_actin_fibers
         self.fibers_list = actin_fibers
