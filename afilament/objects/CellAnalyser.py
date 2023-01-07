@@ -2,6 +2,7 @@ import pickle
 import os
 import csv
 import json
+from datetime import datetime
 
 from afilament.objects import Utils
 from afilament.objects.ConfocalImgReader import ConfocalImgReader
@@ -54,6 +55,8 @@ class CellAnalyser(object):
         self.nuc_area_min_pixels_num = config.nuc_area_min_pixels_num
         self.cap_bottom_ratio = config.cap_bottom_ratio
         self.is_auto_normalize = config.is_auto_normalized
+        self.total_img_number = 0
+        self.total_cells_number = 0
 
 
         for folder in analysis_data_folders.values():
@@ -95,6 +98,10 @@ class CellAnalyser(object):
         """
         Run analysis of the image. Finds all nuclei on the image
         """
+
+        # For metadata statistics
+        self.total_img_number += 1
+
         # To be able visually to verify intermediate steps the program keeps transitional images and all statistic data in the temp folder.
         for folder in temp_folders.values():
             Utils.prepare_folder(folder)
@@ -112,6 +119,7 @@ class CellAnalyser(object):
         for i, nuc_mask in enumerate(nuclei_masks):
             cell = self.analyze_cell(img_num, i, nuc_mask, reader)
             cells.append(cell)
+            self.total_cells_number += 1
         return cells
 
     def _run_analysis(self, cell, part, nucleus_mask, reader):
@@ -284,6 +292,11 @@ class CellAnalyser(object):
         print("Stat created")
 
     def save_config(self):
+        # Add additional information
+        analysis_date = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+        self.initial_conf.analysis_date_time = analysis_date
+        self.initial_conf.total_img_number = self.total_img_number
+        self.initial_conf.total_cells_number = self.total_cells_number
         # Serializing json
         json_conf_str = json.dumps(self.initial_conf, indent=4, default=lambda o: o.__dict__,
             sort_keys=True)

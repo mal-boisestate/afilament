@@ -13,7 +13,7 @@ def main():
     with open("config.json", "r") as f:
         config = json.load(f, object_hook=lambda d: SimpleNamespace(**d))
 
-    img_nums = [0]
+    img_nums = [1,3]
     RECALCULATE = True
 
     javabridge.start_vm(class_path=bioformats.JARS)

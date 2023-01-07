@@ -3,6 +3,7 @@ import javabridge
 import bioformats
 import logging
 import json
+from datetime import datetime
 from types import SimpleNamespace
 
 from afilament.objects.CellAnalyser import CellAnalyser
