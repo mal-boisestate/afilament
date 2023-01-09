@@ -18,7 +18,7 @@ from afilament.objects.Parameters import ImgResolution
 
 
 def get_nuc_mesh(cell):
-    _, tmesh = save_mesh(cell.nucleus.nuc_3D, '../test_files/mesh_nuclei.stl')
+    _, tmesh = save_mesh(cell.nucleus.nuc_3D, 'mesh_nuclei.stl')
     return tmesh
 
 def save_mesh(image_3d, path):
