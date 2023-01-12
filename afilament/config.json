@@ -1,5 +1,5 @@
 {
-  "confocal_img": "D:\\BioLab\\img\\Confocal_img\\2022.10.19_leica_DAPI_488\\2022.10.19_MSC_Contol_10_img_37_cells.lif",
+  "confocal_img": "D:\\BioLab\\img\\Confocal_img\\2022.01.26_leica_KASH_DAPI_488\\2022.01.26_KASH_cnt.lif",
   "nucleus_channel": 0 ,
   "actin_channel": 1,
 
@@ -18,7 +18,7 @@
 
   "norm_th": 65536,
   "find_biggest_mode": "trh",
-  "nuc_theshold": 10,
+  "nuc_theshold": 30,
   "nuc_area_min_pixels_num": 30000,
 
   "fiber_joint_angle": 10,

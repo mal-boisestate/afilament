@@ -11,25 +11,25 @@ from afilament.objects.Cell import Cell
 from afilament.objects.Parameters import UnetParam
 
 temp_folders = {
-    "raw": 'temp/czi_layers',
-    "cut_out_nuc": 'temp/actin_and_nucleus_layers',
-    "actin_xsection": 'temp/actin_layers',
-    "nucleous_xsection": 'temp/nucleus_layers',
-    "actin_mask": 'temp/actin_mask',
-    "nucleus_mask": 'temp/nucleus_mask',
-    "nucleus_top_mask": 'temp/nucleus_top_mask',
-    "nucleus_top_img": 'temp/nucleus_top_img',
-    "nuclei_top_masks": 'temp/nuclei_top_masks',
+    "raw": '../afilament/temp/czi_layers',
+    "cut_out_nuc": '../afilament/temp/actin_and_nucleus_layers',
+    "actin_xsection": '../afilament/temp/actin_layers',
+    "nucleous_xsection": '../afilament/temp/nucleus_layers',
+    "actin_mask": '../afilament/temp/actin_mask',
+    "nucleus_mask": '../afilament/temp/nucleus_mask',
+    "nucleus_top_mask": '../afilament/temp/nucleus_top_mask',
+    "nucleus_top_img": '../afilament/temp/nucleus_top_img',
+    "nuclei_top_masks": '../afilament/temp/nuclei_top_masks',
 }
 
 analysis_data_folders = {
-    "area_ver": 'analysis_data/nuc_area_verification',
-    "mesh": 'analysis_data/mesh',
-    "rotatation_verification": 'analysis_data/rotatation_verification',
-    "actin_stat": 'analysis_data/actin_stat',
-    "actin_objects": 'analysis_data/actin_objects',
-    "middle_xsection": 'analysis_data/middle_xsection',
-    "analysis": 'analysis_data/analysis'
+    "area_ver": '../afilament/analysis_data/nuc_area_verification',
+    "mesh": '../afilament/analysis_data/mesh',
+    "rotatation_verification": '../afilament/analysis_data/rotatation_verification',
+    "actin_stat": '../afilament/analysis_data/actin_stat',
+    "actin_objects": '../afilament/analysis_data/actin_objects',
+    "middle_xsection": '../afilament/analysis_data/middle_xsection',
+    "analysis": '../afilament/analysis_data/analysis'
 }
 
 
