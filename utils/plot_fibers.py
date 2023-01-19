@@ -3,9 +3,9 @@ from afilament.objects.Parameters import TestStructure
 from afilament.objects.Fibers import Fibers
 
 if __name__ == '__main__':
-    actin_obj_cap= pickle.load(open(r"D:\BioLab\Current_experiments\afilament\2022.10.19_leica_CNT_and_LIV\2022.10.19_MSC_Contol_10_img_37_cells\actin_objects\img_num_9__cell_num_3_cap_3d_actin.obj", "rb"))
+    actin_obj_cap= pickle.load(open(r"D:\BioLab\Current_experiments\afilament\2022.10.19_leica_CNT_and_LIV\2022.10.19_MSC_Contol_10_img_37_cells\actin_objects\img_num_0__cell_num_1_cap_3d_actin.obj", "rb"))
     # test_structure = pickle.load(open('test_structure.pickle', "rb"))
-    actin_obj_bottom= pickle.load(open(r"D:\BioLab\Current_experiments\afilament\2022.10.19_leica_CNT_and_LIV\2022.10.19_MSC_Contol_10_img_37_cells\actin_objects\img_num_9__cell_num_3_bottom_3d_actin.obj", "rb"))
+    actin_obj_bottom= pickle.load(open(r"D:\BioLab\Current_experiments\afilament\2022.10.19_leica_CNT_and_LIV\2022.10.19_MSC_Contol_10_img_37_cells\actin_objects\img_num_0__cell_num_1_bottom_3d_actin.obj", "rb"))
 
     actin_obj_cap.plot()
     actin_obj_bottom.plot()
