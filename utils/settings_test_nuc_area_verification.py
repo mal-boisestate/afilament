@@ -12,7 +12,8 @@ def main():
     with open("../afilament/config.json", "r") as f:
         config = json.load(f, object_hook=lambda d: SimpleNamespace(**d))
 
-    img_nums = [0,1,2,3,4,5,6,7,8]
+    img_nums = range(0, 17)
+    print(img_nums)
 
     javabridge.start_vm(class_path=bioformats.JARS)
     analyser = CellAnalyser(config)

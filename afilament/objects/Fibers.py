@@ -152,7 +152,8 @@ class Fibers(object):
         mid_cut_img, z_start, z_end = Utils.get_yz_xsection(actin_3d_img, folders["actin_xsection"], "actin",
                                                             cnt_extremes)
         # here as an option it is possibe to use different models for whole cell, top, bottom
-        run_predict_unet(folders["actin_xsection"], folders["actin_mask"], unet_parm.actin_unet_model,
+        Utils.save_as_8bit(folders["actin_xsection"], folders["actin_xsection_unet"])
+        run_predict_unet(folders["actin_xsection_unet"], folders["actin_mask"], unet_parm.actin_unet_model,
                          unet_parm.unet_model_scale,
                          unet_parm.unet_model_thrh)
 

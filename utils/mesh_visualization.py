@@ -18,7 +18,7 @@ from afilament.objects.Parameters import ImgResolution
 
 
 def get_nuc_mesh(cell):
-    _, tmesh = save_mesh(cell.nucleus.nuc_3D, 'mesh_nuclei.stl')
+    _, tmesh = save_mesh(cell.nucleus.nuc_3D_mask, 'mesh_nuclei.stl')
     return tmesh
 
 def save_mesh(image_3d, path):
@@ -147,25 +147,27 @@ if __name__ == '__main__':
     scale_y = 0.05882
     scale_z = 0.270
     resolution = ImgResolution(scale_x, scale_y, scale_z)
-    file_path=r"F:\Nina_Docs\BioLab\afilament\afilament\analysis_data\test_cells_bach.pickle"
+    file_path=r"D:\BioLab\Current_experiments\afilament\2022.10.19_leica_CNT_and_LIV\2022.10.19_leica_MSC_6xLIV_10_img_32_cells\2022.10.19_leica_MSC_6xLIV_10_img_32_cells.pickle"
     # file_path = r"D:\BioLab\Current_experiments\afilament\2022.08.09_very_first_cell_analysis_data\analysis_data\test_cells_bach.pickle"
     cells = pickle.load(open(file_path, "rb"))
-    cell = cells[4]
-    tmesh = get_nuc_mesh(cell)
-    final_mesh = optimize_mesh(tmesh, resolution)
-    # fibers, nodes, nodes_point_cloud_scaled = get_nodes(cell, resolution)
+    #cell = cells[0]
 
-    # closest_nodes_indx = find_closest_nodes(final_mesh, nodes, resolution)
+    for cell in cells:
+        tmesh = get_nuc_mesh(cell)
+        final_mesh = optimize_mesh(tmesh, resolution)
+        # fibers, nodes, nodes_point_cloud_scaled = get_nodes(cell, resolution)
 
-    p = pv.Plotter()
-    draw_fibers(final_mesh, p, cell)
-    # draw_merged_fibers(final_mesh, p, cell)
-    #
-    # # draw_fibers_as_geopath(final_mesh, p, nodes, fibers, resolution)
-    # # draw_nodes(p, nodes, resolution)
-    # # draw_closest_nodes(p, closest_nodes_indx, final_mesh)
-    p.add_mesh(final_mesh, color=True, show_edges=True)
+        # closest_nodes_indx = find_closest_nodes(final_mesh, nodes, resolution)
 
-    # p.add_mesh_clip_plane(final_mesh)
+        p = pv.Plotter()
+        # draw_fibers(final_mesh, p, cell)
+        # draw_merged_fibers(final_mesh, p, cell)
+        #
+        # # draw_fibers_as_geopath(final_mesh, p, nodes, fibers, resolution)
+        # # draw_nodes(p, nodes, resolution)
+        # # draw_closest_nodes(p, closest_nodes_indx, final_mesh)
+        p.add_mesh(final_mesh, color=True, show_edges=True)
 
-    p.show()
+        # p.add_mesh_clip_plane(final_mesh)
+
+        p.show()

@@ -115,20 +115,22 @@ class Cell(object):
     def get_aggregated_cell_stat(self, is_separate_cap_bottom):
         """
         [_, "Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre", "Nucleus_width, micrometre",
-         "Nucleus_high, micrometre", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num", "Total_fiber_volume, cubic_micrometre",
+         "Nucleus_high, micrometre", "Nucleus_total_intensity",", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num", "Total_fiber_volume, cubic_micrometre",
          "Cap_fiber_volume, cubic_micrometre", "Bottom_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",
          "Cap_fiber_length, micrometre", "Bottom_fiber_length, micrometre",
          "Slope_total_variance", "Slope_cap_variance", "Slope_bottom_variance",
          "Nodes_total, #", "Nodes_total, #", "Nodes_bottom, #"]
         """
         if is_separate_cap_bottom:
-            return [self.img_number, self.number, self.nucleus.nuc_volume, self.nucleus.nuc_length, self.nucleus.nuc_width, self.nucleus.nuc_high,
+            return [self.img_number, self.number, self.nucleus.nuc_volume, self.nucleus.nuc_length,
+                    self.nucleus.nuc_width, self.nucleus.nuc_high, self.nucleus.nuc_intensity,
                     self.actin_total.total_num, self.actin_cap.total_num, self.actin_bottom.total_num,
                     self.actin_total.total_volume, self.actin_cap.total_volume, self.actin_bottom.total_volume,
                     self.actin_total.total_length, self.actin_cap.total_length, self.actin_bottom.total_length,
                     self.actin_total.slope_variance, self.actin_cap.slope_variance, self.actin_bottom.slope_variance,
                     len(self.total_nodes), len(self.cap_nodes), len(self.bottom_nodes)]
         else:
-            return [self.img_number, self.number, self.nucleus.nuc_volume, self.nucleus.nuc_length, self.nucleus.nuc_width,
-                    self.nucleus.nuc_high, self.actin_total.total_num, self.actin_total.total_volume,
-                    self.actin_total.total_length, self.actin_total.slope_variance, len(self.total_nodes)]
+            return [self.img_number, self.number, self.nucleus.nuc_volume, self.nucleus.nuc_length,
+                    self.nucleus.nuc_width, self.nucleus.nuc_high, self.nucleus.nuc_intensity,
+                    self.actin_total.total_num, self.actin_total.total_volume, self.actin_total.total_length,
+                    self.actin_total.slope_variance, len(self.total_nodes)]

@@ -132,18 +132,27 @@ def rotate_and_get_3D(input_folder, identifier, rot_angle):
     object_layers = []
     for img_path in glob.glob(os.path.join(input_folder, "*_" + identifier + "_*.png")):
         layer = int(img_path.rsplit(".", 1)[0].rsplit("_", 1)[1])
-        object_img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+        object_img = cv2.imread(img_path, cv2.IMREAD_ANYDEPTH)
         object_img = rotate_bound(object_img, rot_angle)
         object_layers.append([object_img, layer])
         # cv2.imshow("output", cv2.resize(object_img, (1000, 1000))) #keep for debugging purposes
         # cv2.waitKey()
     object_layers = sorted(object_layers, key=lambda x: x[1], reverse=True)
-    image_3d = np.asarray([img for img, layer in object_layers], dtype=np.uint8)
+    image_3d = np.asarray([img for img, layer in object_layers])
     max_progection = image_3d[:, :, :].max(axis=0, out=None, keepdims=False, where=True)
-    max_progection_img = cv2.resize(max_progection, (1000, 1000))
+    max_progection_img = cv2.resize(max_progection, (512, 512))
     image_3d = np.moveaxis(image_3d, 0, -1)  # Before moving axis (z, x, y), after moving axis (x, y, z)
 
     return image_3d, max_progection_img
+
+
+def save_as_8bit(input_folder, output_folder):
+    for img_path in glob.glob(os.path.join(input_folder, "*.png")):
+        object_img = cv2.imread(img_path, cv2.IMREAD_ANYDEPTH)
+        pixel_value = 65536 if object_img.dtype == "uint16" else 256
+        img_8bit = np.uint8(object_img / (pixel_value / 256))
+        output_img_path = os.path.join(output_folder, os.path.basename(img_path))
+        cv2.imwrite(output_img_path, img_8bit)
 
 
 def get_yz_xsection(img_3d, output_folder, identifier, cnt_extremes, unet_img_size=512):
@@ -207,12 +216,12 @@ def get_3d_img(input_folder):
         img_name, img_ext = os.path.splitext(os.path.basename(img_path))
         layer = int(img_name.rsplit("_", 1)[1])  # layer number is part of the image name
 
-        img = cv2.imread(img_path, 0)
+        img = cv2.imread(img_path, cv2.IMREAD_ANYDEPTH)
         # img = np.flip(img, axis=0)
         object_layers.append([img, layer])
 
     object_layers = sorted(object_layers, key=lambda x: x[1], reverse=True)
-    img_3d = np.asarray([mask for mask, layer in object_layers], dtype=np.uint8)
+    img_3d = np.asarray([mask for mask, layer in object_layers])
 
     return img_3d
 
@@ -298,8 +307,9 @@ def сut_out_mask(mask, input_folder, output_folder, identifier):
     object_layers = []
     for img_path in glob.glob(os.path.join(input_folder, "*_" + identifier + "_*.png")):
         layer = int(img_path.rsplit(".", 1)[0].rsplit("_", 1)[1])
-        object_img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-        object_layer = cv2.bitwise_and(object_img, mask)
+        object_img = cv2.imread(img_path, cv2.IMREAD_ANYDEPTH)
+        mask[mask == 255] = 1
+        object_layer = np.multiply(object_img, mask)
         object_layers.append([object_layer, layer])
         cv2.imwrite(os.path.join(output_folder, os.path.basename(img_path)), object_layer)
 
@@ -364,12 +374,6 @@ def rotate_point(rotated_point, main_point, rot_angle):
     int(main_point[0] + x * math.cos(math.radians(rot_angle)) - y * math.sin(math.radians(rot_angle))),
     int(main_point[1] + x * math.sin(math.radians(rot_angle)) + y * math.cos(math.radians(rot_angle))))
     return new_coordinates
-    # ox, oy = main_point
-    # px, py = rotated_point
-    #
-    # qx = ox + math.cos(rot_angle) * (px - ox) - math.sin(rot_angle) * (py - oy)
-    # qy = oy + math.sin(rot_angle) * (px - ox) + math.cos(rot_angle) * (py - oy)
-    # return (qx, qy)
 
 
 def normalization(img, norm_th):

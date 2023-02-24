@@ -14,7 +14,9 @@ temp_folders = {
     "raw": '../afilament/temp/czi_layers',
     "cut_out_nuc": '../afilament/temp/actin_and_nucleus_layers',
     "actin_xsection": '../afilament/temp/actin_layers',
+    "actin_xsection_unet": '../afilament/temp/actin_layers_unet',
     "nucleous_xsection": '../afilament/temp/nucleus_layers',
+    "nucleous_xsection_unet": '../afilament/temp/nucleus_layers_unet',
     "actin_mask": '../afilament/temp/actin_mask',
     "nucleus_mask": '../afilament/temp/nucleus_mask',
     "nucleus_top_mask": '../afilament/temp/nucleus_top_mask',
@@ -261,7 +263,7 @@ class CellAnalyser(object):
         if self.is_separate_cap_bottom:
             header_row = ["Image_name", "Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre",
                           "Nucleus_length, micrometre", "Nucleus_width, micrometre",
-                          "Nucleus_high, micrometre", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num",
+                          "Nucleus_high, micrometre", "Nucleus_total_intensity", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num",
                           "Total_fiber_volume, cubic_micrometre",
                           "Cap_fiber_volume, cubic_micrometre", "Bottom_fiber_volume, cubic_micrometre",
                           "Total_fiber_length, micrometre",
@@ -278,8 +280,8 @@ class CellAnalyser(object):
                     csv_writer.writerow([str(self.confocal_path)] + cell.get_aggregated_cell_stat(self.is_separate_cap_bottom))
         else:
             header_row = ["Image_name","Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre",
-                          "Nucleus_width, micrometre",
-                          "Nucleus_high, micrometre", "Total_fiber_num",
+                          "Nucleus_width, micrometre", "Nucleus_high, micrometre",
+                          "Nucleus_total_intensity", "Total_fiber_num",
                           "Total_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",
                           "Slope_total_variance","Nodes_total, #"]
             path = os.path.join(analysis_data_folders["analysis"], 'cell_stat.csv')

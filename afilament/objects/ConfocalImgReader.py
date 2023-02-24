@@ -244,7 +244,10 @@ class ConfocalImgReader(object):
                                         channel_names=None)
 
             type = self.metadata_obj.image(self.series).Pixels.get_PixelType()
-            img = self.normalization(img, type)
+            """I am trying to redo it to actualy image size, for example 16 bits,
+            so I can have more inensity data - remove that commnets after story will be done"""
+            # img = self.normalization(img, type)
+
 
             image_stack.append(img)
         return image_stack

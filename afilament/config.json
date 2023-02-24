@@ -1,7 +1,7 @@
 {
-  "confocal_img": "D:\\BioLab\\img\\Confocal_img\\2022.01.26_leica_KASH_DAPI_488\\2022.01.26_KASH_cnt.lif",
-  "nucleus_channel": 0 ,
-  "actin_channel": 1,
+  "confocal_img": "D:\\BioLab\\img\\2023.02.14_DAPI_Alexa488_LIV_Experiment\\LIV_sample",
+  "nucleus_channel": 1,
+  "actin_channel": 0,
 
   "actin_unet_model": "../unet/models/CP_epoch200_actin_weight.corection_200_labling_V2.pth",
   "nucleus_unet_model": "../unet/models/CP_epoch50_nucleus_weight.corection_200_labling_WITH_FLAT_Apatome_no_agum_V3.pth",
@@ -13,12 +13,12 @@
   "is_plot_nodes": false,
   "is_auto_normalized": false,
   "is_connect_fibers": false,
-  "is_separate_cap_bottom": true,
+  "is_separate_cap_bottom": false,
   "cap_bottom_ratio": 0.4,
 
   "norm_th": 65536,
   "find_biggest_mode": "trh",
-  "nuc_theshold": 30,
+  "nuc_theshold": 5,
   "nuc_area_min_pixels_num": 30000,
 
   "fiber_joint_angle": 10,
