@@ -153,7 +153,7 @@ def find_branching_nodes(not_copied_fibers, new_actin_len_th, is_plot_nodes):
             if break_index < new_actin_len_th or len(actin_to_break.xs) - new_actin_len_th < break_index:
                 continue
 
-            new_right_actin = SingleFiber(-1, -1, -1, -1, -1)
+            new_right_actin = SingleFiber(-1, -1, -1, -1, -1, -1)
             new_right_actin.xs = actin_to_break.xs[break_index + 1:]
             new_right_actin.ys = actin_to_break.ys[break_index + 1:]
             new_right_actin.zs = actin_to_break.zs[break_index + 1:]
@@ -209,7 +209,7 @@ def find_branching_nodes(not_copied_fibers, new_actin_len_th, is_plot_nodes):
             if break_index < new_actin_len_th or len(actin_to_break.xs) - new_actin_len_th < break_index:
                 continue
 
-            new_right_actin = SingleFiber(-1, -1, -1, -1, -1)
+            new_right_actin = SingleFiber(-1, -1, -1, -1, -1, -1)
             new_right_actin.xs = actin_to_break.xs[break_index + 1:]
             new_right_actin.ys = actin_to_break.ys[break_index + 1:]
             new_right_actin.zs = actin_to_break.zs[break_index + 1:]

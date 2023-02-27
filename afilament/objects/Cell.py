@@ -118,7 +118,7 @@ class Cell(object):
          "Nucleus_high, micrometre", "Nucleus_total_intensity",", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num", "Total_fiber_volume, cubic_micrometre",
          "Cap_fiber_volume, cubic_micrometre", "Bottom_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",
          "Cap_fiber_length, micrometre", "Bottom_fiber_length, micrometre",
-         "Slope_total_variance", "Slope_cap_variance", "Slope_bottom_variance",
+         "Fiber_intensity_whole", "Fiber_intensity_cap", "Fiber_intensity_bottom",
          "Nodes_total, #", "Nodes_total, #", "Nodes_bottom, #"]
         """
         if is_separate_cap_bottom:
@@ -127,10 +127,10 @@ class Cell(object):
                     self.actin_total.total_num, self.actin_cap.total_num, self.actin_bottom.total_num,
                     self.actin_total.total_volume, self.actin_cap.total_volume, self.actin_bottom.total_volume,
                     self.actin_total.total_length, self.actin_cap.total_length, self.actin_bottom.total_length,
-                    self.actin_total.slope_variance, self.actin_cap.slope_variance, self.actin_bottom.slope_variance,
+                    self.actin_total.intensity, self.actin_cap.intensity, self.actin_bottom.intensity,
                     len(self.total_nodes), len(self.cap_nodes), len(self.bottom_nodes)]
         else:
             return [self.img_number, self.number, self.nucleus.nuc_volume, self.nucleus.nuc_length,
                     self.nucleus.nuc_width, self.nucleus.nuc_high, self.nucleus.nuc_intensity,
                     self.actin_total.total_num, self.actin_total.total_volume, self.actin_total.total_length,
-                    self.actin_total.slope_variance, len(self.total_nodes)]
+                    self.actin_total.intensity, len(self.total_nodes)]

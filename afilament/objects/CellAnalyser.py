@@ -268,8 +268,8 @@ class CellAnalyser(object):
                           "Cap_fiber_volume, cubic_micrometre", "Bottom_fiber_volume, cubic_micrometre",
                           "Total_fiber_length, micrometre",
                           "Cap_fiber_length, micrometre", "Bottom_fiber_length, micrometre",
-                          "Slope_total_variance",
-                          "Slope_cap_variance", "Slope_bottom_variance",
+                          "Fiber_intensity_whole"
+                          "Fiber_intensity_cap", "Fiber_intensity_bottom",
                            "Nodes_total, #", "Nodes_total, #", "Nodes_bottom, #"
                           ]
             path = os.path.join(analysis_data_folders["analysis"], 'cell_stat.csv')
@@ -283,7 +283,7 @@ class CellAnalyser(object):
                           "Nucleus_width, micrometre", "Nucleus_high, micrometre",
                           "Nucleus_total_intensity", "Total_fiber_num",
                           "Total_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",
-                          "Slope_total_variance","Nodes_total, #"]
+                          "Fiber_intensity_whole","Nodes_total, #"]
             path = os.path.join(analysis_data_folders["analysis"], 'cell_stat.csv')
             with open(path, mode='w') as stat_file:
                 csv_writer = csv.writer(stat_file, delimiter=',')

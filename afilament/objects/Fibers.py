@@ -14,13 +14,14 @@ from afilament.objects.MergedFiber import MergedFiber
 
 
 class ActinContour(object):
-    def __init__(self, x, y, z, cnt):
+    def __init__(self, x, y, z, cnt, intensity):
         self.x = x
         self.y = y
         self.z = z
         self.cnt = cnt
         self.xsection = 0
         self.parent = None
+        self.original_intensity = intensity
 
 
 class Fibers(object):
@@ -31,19 +32,25 @@ class Fibers(object):
         self.total_length = None
         self.total_num = None
         self.fibers_list = None
-        self.slope_variance = None
+        self.intensity = None
         self.is_merged = False
 
-    def get_actin_cnt_objs(self, xsection, x):
-        cnts = cv2.findContours(xsection, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
+    def get_actin_cnt_objs(self, xsection_mask, xsection_img, x):
+        cnts = cv2.findContours(xsection_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
         actin_cnt_objs = []
+        intensity = 0
         for cnt in cnts:
+            single_cnt_mask = Contour.draw_cnt(cnt, xsection_mask.shape)
+            single_cnt_mask[single_cnt_mask == 255] = 1
+            single_xsection_img = np.multiply(xsection_img, single_cnt_mask)
+            intensity = np.sum(single_xsection_img)
+
             z, y = Contour.get_cnt_center(cnt)
-            actin_cnt_objs.append(ActinContour(x, y, z, cnt))
+            actin_cnt_objs.append(ActinContour(x, y, z, cnt, intensity))
 
         return actin_cnt_objs
 
-    def _get_actin_fibers(self, img_3d, fiber_min_layers_theshold):
+    def _get_actin_fibers(self, mask_3d, img_3d, fiber_min_layers_theshold):
         """
         Creates initial actin fibers based on the biggest intersection of actin contour on successive layers.
 
@@ -63,17 +70,20 @@ class Fibers(object):
         """
         actin_fibers = []
 
-        for x_slice in range(img_3d.shape[0]):
-            print("Processing {} slice out of {} slices".format(x_slice, img_3d.shape[0]))
+        for x_slice in range(mask_3d.shape[0]):
+            print("Processing {} slice out of {} slices".format(x_slice, mask_3d.shape[0]))
 
-            xsection = img_3d[x_slice, :, :]
+            xsection_mask = mask_3d[x_slice, :, :]
+            xsection_img = img_3d[x_slice, :, :]
 
-            actin_cnt_objs = self.get_actin_cnt_objs(xsection, x_slice)
+
+            actin_cnt_objs = self.get_actin_cnt_objs(xsection_mask, xsection_img, x_slice)
 
             if x_slice == 0 or not actin_fibers:
                 actin_fibers.extend([SingleFiber(actin_contour_obj.x,
                                                  actin_contour_obj.y,
                                                  actin_contour_obj.z,
+                                                 actin_contour_obj.original_intensity,
                                                  x_slice,
                                                  actin_contour_obj.cnt)
                                      for actin_contour_obj in actin_cnt_objs])
@@ -86,10 +96,10 @@ class Fibers(object):
                 # is_increased_intersection is increased by 1 pixel to check if it helps to reconstruct fibers more precise
                 for new_layer_cnt_obj in actin_cnt_objs:
                     for i, actin_fiber in enumerate(actin_fibers_from_previous_layer):
-                        new_layer_cnt_mask = np.zeros_like(xsection)
+                        new_layer_cnt_mask = np.zeros_like(xsection_mask)
                         cv2.drawContours(new_layer_cnt_mask, [new_layer_cnt_obj.cnt], -1, 255, -1)
 
-                        actin_cnt_mask = np.zeros_like(xsection)
+                        actin_cnt_mask = np.zeros_like(xsection_mask)
                         cv2.drawContours(actin_cnt_mask, [actin_fiber.cnts[-1]], -1, 255, -1)
 
                         intersection = np.count_nonzero(cv2.bitwise_and(new_layer_cnt_mask, actin_cnt_mask))
@@ -103,8 +113,8 @@ class Fibers(object):
 
                     if len(children_cnts) == 1:
                         new_layer_cnt = children_cnts[0]
-                        actin_fiber.update(new_layer_cnt.x, new_layer_cnt.y, new_layer_cnt.z, x_slice,
-                                           new_layer_cnt.cnt)
+                        actin_fiber.update(new_layer_cnt.x, new_layer_cnt.y, new_layer_cnt.z,
+                                           new_layer_cnt.original_intensity, x_slice, new_layer_cnt.cnt)
 
                     if len(children_cnts) > 1:
                         max_intersection, idx = 0, -1
@@ -114,18 +124,20 @@ class Fibers(object):
                                 idx = j
 
                         new_layer_cnt = children_cnts[idx]
-                        actin_fiber.update(new_layer_cnt.x, new_layer_cnt.y, new_layer_cnt.z, x_slice,
-                                           new_layer_cnt.cnt)
+                        actin_fiber.update(new_layer_cnt.x, new_layer_cnt.y, new_layer_cnt.z,
+                                           new_layer_cnt.original_intensity, x_slice, new_layer_cnt.cnt)
 
                         for j, child_cnt in enumerate(children_cnts):
                             if j != idx:
                                 actin_fibers.append(
-                                    SingleFiber(child_cnt.x, child_cnt.y, child_cnt.z, x_slice, child_cnt.cnt))
+                                    SingleFiber(child_cnt.x, child_cnt.y, child_cnt.z,
+                                                child_cnt.original_intensity, x_slice, child_cnt.cnt))
 
                 # create new ActinFibers for contour objects which were not assigned to any existed ActinFibers
                 for child_cnt in actin_cnt_objs:
                     if child_cnt.parent is None:
-                        actin_fibers.append(SingleFiber(child_cnt.x, child_cnt.y, child_cnt.z, x_slice, child_cnt.cnt))
+                        actin_fibers.append(SingleFiber(child_cnt.x, child_cnt.y, child_cnt.z,
+                                                        child_cnt.original_intensity, x_slice, child_cnt.cnt))
         actin_fibers_filtered = [fiber for fiber in actin_fibers if fiber.n >= fiber_min_layers_theshold]
 
         return actin_fibers_filtered
@@ -158,7 +170,8 @@ class Fibers(object):
                          unet_parm.unet_model_thrh)
 
         fibers_3D_mask = Utils.get_3d_img(folders["actin_mask"])
-        actin_fibers = self._get_actin_fibers(fibers_3D_mask, fiber_min_layers_theshold)
+        fibers_3D_img = Utils.get_3d_img(folders["actin_xsection"])
+        actin_fibers = self._get_actin_fibers(fibers_3D_mask, fibers_3D_img, fiber_min_layers_theshold)
         if part == "cap" or part == "bottom":
             for fiber in actin_fibers:
                 fiber.assign_cap_or_bottom(z_start, z_end, cap_bottom_ratio)
@@ -358,8 +371,8 @@ class Fibers(object):
     def _add_fibers_aggregated_stat(self, resolution):
         total_volume = 0
         total_actin_length = 0
+        total_actin_intensity = 0
         total_num = 0
-        slopes = []
         for i, fiber in enumerate(self.fibers_list):
             actin_length = (fiber.xs[-1] - fiber.xs[0]) * resolution.x
             actin_xsection = np.mean([cv2.contourArea(cnt) for cnt in fiber.cnts]) * resolution.y * resolution.z
@@ -367,18 +380,13 @@ class Fibers(object):
             total_actin_length = total_actin_length + actin_length
             total_volume = total_volume + actin_volume
             total_num = total_num + 1
-            if fiber.xs[-1] - fiber.xs[0] == 0:
-                slope = math.degrees(math.tan((fiber.ys[-1] - fiber.ys[0]) / 1))
-            else:
-                slope = math.degrees(math.tan((fiber.ys[-1] - fiber.ys[0]) / (fiber.xs[-1] - fiber.xs[0])))
-            slopes.append(slope)
-        if len(slopes) < 2: #Fix "statistics.StatisticsError: variance requires at least two data points"
-            self.slope_variance = 0
-        else:
-            self.slope_variance = statistics.variance(slopes)
+            actin_intensity = np.sum([layer_intensity for layer_intensity in fiber.intensities])
+            total_actin_intensity = total_actin_intensity + actin_intensity
+
         self.total_volume = total_volume
         self.total_length = total_actin_length
         self.total_num = total_num
+        self.intensity = total_actin_intensity
 
 
     def _update_merged_fibers_aggregated_stat(self, resolution):
@@ -403,7 +411,7 @@ class Fibers(object):
 
 
     def save_each_fiber_stat(self, resolution, file_path):
-        header_row = ["ID", "Actin Length", "Actin Xsection", "Actin Volume", "Number of fiber layers", "Slope"]
+        header_row = ["ID", "Actin Length", "Actin Xsection", "Actin Volume", "Number of fiber layers", "Intensity"]
         with open(file_path, mode='w') as stat_file:
             csv_writer = csv.writer(stat_file, delimiter=',')
             csv_writer.writerow(header_row)

@@ -11,10 +11,11 @@ class SingleFiber(object):
     # scale_y = 0.04  # units - micrometer (image was resized to account for different scale along z axis)
     # scale_z = 0.17  # units - micrometer (image was resized to account for different scale along z axis)
 
-    def __init__(self, x, y, z, layer, cnt):
+    def __init__(self, x, y, z, intensity, layer, cnt):
         self.xs = [x]
         self.ys = [y]
         self.zs = [z]
+        self.intensities = [intensity]
         self.cnts = [cnt]
         self.last_layer = [layer]
         self.n = 1
@@ -22,10 +23,11 @@ class SingleFiber(object):
         self.merged = False
         self.part = None
 
-    def update(self, x, y, z, layer, cnt):
+    def update(self, x, y, z, intensity, layer, cnt):
         self.xs.append(x)
         self.ys.append(y)
         self.zs.append(z)
+        self.intensities.append(intensity)
         self.cnts.append(cnt)
         self.last_layer.append(layer)
         self.n += 1
@@ -95,15 +97,15 @@ class SingleFiber(object):
         actin_length - full length of fiber
         actin_xsection - sum of all xsections for each layer times scale
         actin_volume - actin length times average xsection
+        actin_intensity - sum of original intensity (8, 12, or 16 bit) of the actin fiber
         """
         actin_length = (self.xs[-1] - self.xs[0]) * resolution.x
         actin_xsection = np.mean([cv2.contourArea(cnt) for cnt in self.cnts]) * resolution.y * resolution.z
         actin_volume = actin_length * actin_xsection
+        actin_intensity = np.sum([intensity for intensity in self.intensities])
 
         adjacent = (self.xs[-1] - self.xs[0])
         if adjacent == 0:
             adjacent = 1
 
-        slope = math.degrees(math.tan((self.ys[-1] - self.ys[0]) / adjacent))
-
-        return [actin_length, actin_xsection, actin_volume, self.n, slope]
+        return [actin_length, actin_xsection, actin_volume, self.n, actin_intensity]

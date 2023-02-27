@@ -444,9 +444,14 @@ def draw_and_save_cnts_verification(analysis_folder, image_path, cnts, max_proge
 def remove_edge_nuc(cnts, img_dim):  # removes cells that touch the edges of the frame
     max_x, max_y = img_dim
 
-    if max_x != max_y:
-        sys.exit("The current version of the program can analyze only square shape images."
-                 "Please modify remove_edge_cells to overcome this issue.")
+    # Countours should not touch the edges of the image
+    new_cnts = []
+    for cnt in cnts:
+        cnt_max_x = cnt[:, 0, 0].max()
+        cnt_max_y = cnt[:, 0, 1].max()
+        cnt_min_x = cnt[:, 0, 0].min()
+        cnt_min_y = cnt[:, 0, 1].min()
+        if (cnt_max_x < max_x - 2) and (cnt_max_y < max_y - 2) and (cnt_min_x > 1) and (cnt_min_y > 1):
+            new_cnts.append(cnt)
 
-    new_cnts = [cnt for cnt in cnts if cnt.max() < max_x - 1 and cnt.min() > 1]
     return new_cnts
