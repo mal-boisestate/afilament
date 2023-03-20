@@ -58,9 +58,12 @@ class Cell(object):
             "bottom" -  analyze basal fibers
         """
         fibers = Fibers(part)
+        cap_bottom_cut_off_z = self.nucleus.get_cut_off_z(cap_bottom_ratio)
+
+
         rotated_max_projection, mid_cut_img = fibers.reconstruct(rot_angle, rotated_cnt_extremes, folders,
                                                                  unet_parm, part, fiber_min_layers_theshold,
-                                                                 resolution, cap_bottom_ratio)
+                                                                 resolution, cap_bottom_cut_off_z)
         if is_connect_fibers:
             fiber_joint_angle_z = math.degrees(math.atan(self.nucleus.nuc_length/(self.nucleus.nuc_high/2))) #Fiber join angle for z axis is calculated based on nucleus height and length so the algorithm considers curve surface of nucleus
             nodes, pairs = fibers.find_connections(fiber_joint_angle, fiber_joint_angle_z, fiber_joint_distance, resolution)
@@ -115,22 +118,28 @@ class Cell(object):
     def get_aggregated_cell_stat(self, is_separate_cap_bottom):
         """
         [_, "Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre", "Nucleus_width, micrometre",
-         "Nucleus_high, micrometre", "Nucleus_total_intensity",", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num", "Total_fiber_volume, cubic_micrometre",
+         "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre", "Nucleus_total_intensity",", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num", "Total_fiber_volume, cubic_micrometre",
          "Cap_fiber_volume, cubic_micrometre", "Bottom_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",
          "Cap_fiber_length, micrometre", "Bottom_fiber_length, micrometre",
          "Fiber_intensity_whole", "Fiber_intensity_cap", "Fiber_intensity_bottom",
+         "F-actin_signal_intensity_whole", "F-actin_signal_intensity_cap", "F-actin_signal_intensity_bottom",
          "Nodes_total, #", "Nodes_total, #", "Nodes_bottom, #"]
         """
         if is_separate_cap_bottom:
             return [self.img_number, self.number, self.nucleus.nuc_volume, self.nucleus.nuc_length,
-                    self.nucleus.nuc_width, self.nucleus.nuc_high, self.nucleus.nuc_intensity,
+                    self.nucleus.nuc_width, self.nucleus.nuc_high, self.nucleus.nuc_high_alternative, self.nucleus.nuc_intensity,
                     self.actin_total.total_num, self.actin_cap.total_num, self.actin_bottom.total_num,
                     self.actin_total.total_volume, self.actin_cap.total_volume, self.actin_bottom.total_volume,
                     self.actin_total.total_length, self.actin_cap.total_length, self.actin_bottom.total_length,
                     self.actin_total.intensity, self.actin_cap.intensity, self.actin_bottom.intensity,
+                    self.actin_total.f_actin_signal_total_intensity, self.actin_cap.f_actin_signal_total_intensity,
+                    self.actin_bottom.f_actin_signal_total_intensity,
                     len(self.total_nodes), len(self.cap_nodes), len(self.bottom_nodes)]
         else:
             return [self.img_number, self.number, self.nucleus.nuc_volume, self.nucleus.nuc_length,
-                    self.nucleus.nuc_width, self.nucleus.nuc_high, self.nucleus.nuc_intensity,
-                    self.actin_total.total_num, self.actin_total.total_volume, self.actin_total.total_length,
-                    self.actin_total.intensity, len(self.total_nodes)]
+                    self.nucleus.nuc_width, self.nucleus.nuc_high, self.nucleus.nuc_high_alternative,
+                    self.nucleus.nuc_intensity, self.actin_total.total_num, self.actin_total.total_volume, self.actin_total.total_length,
+                    self.actin_total.intensity, self.actin_total.f_actin_signal_total_intensity, len(self.total_nodes)]
+
+
+

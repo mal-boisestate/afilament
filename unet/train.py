@@ -60,7 +60,7 @@ def train_net(net,
     if net.n_classes > 1:
         criterion = nn.CrossEntropyLoss()
     else:
-        pos_weight = torch.tensor(20).to(device=device)  #pos_weight is weight corf white of pixels compare to black
+        pos_weight = torch.tensor(200).to(device=device)  #pos_weight is weight corf white of pixels compare to black
         criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     for epoch in range(epochs):

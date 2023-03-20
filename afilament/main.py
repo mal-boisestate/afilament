@@ -13,7 +13,7 @@ def main():
     with open("config.json", "r") as f:
         config = json.load(f, object_hook=lambda d: SimpleNamespace(**d))
 
-    img_nums = range(0,1)
+    img_nums = range(1,21)
     RECALCULATE = True
 
     javabridge.start_vm(class_path=bioformats.JARS)
@@ -39,8 +39,8 @@ def main():
             #                          f"\n Error: {e} \n----------- \n")
             #     print("An exception occurred")
 
-        with open('analysis_data/test_cells_bach.pickle', "wb") as file_to_save:
-            pickle.dump(all_cells, file_to_save)
+        # with open('analysis_data/test_cells_bach.pickle', "wb") as file_to_save:
+        #     pickle.dump(all_cells, file_to_save)
     else:
         all_cells = pickle.load(open('analysis_data/test_cells_bach.pickle', "rb"))
 

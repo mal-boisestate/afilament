@@ -18,10 +18,12 @@ class Nucleus(object):
         self.nuc_length = None
         self.nuc_width = None
         self.nuc_high = None
+        self.nuc_high_alternative = None
         self.nuc_3D_mask = None
         self.point_cloud = None
         self.nucleus_3d_img = None
         self.nuc_intensity = None
+
 
     def reconstruct(self, rot_angle, cnt_extremes, temp_folders, unet_parm, resolution, analysis_folder):
         """
@@ -49,8 +51,17 @@ class Nucleus(object):
         self.nucleus_reco_3d(resolution, analysis_folder)
         self.nuc_length = (cnt_extremes.right[0] - cnt_extremes.left[0]) * resolution.x
         self.nuc_width = (cnt_extremes.bottom[1] - cnt_extremes.top[1]) * resolution.y
+        point_cloud = np.array(self.point_cloud)
+        self.nuc_high_alternative = (max(point_cloud[:, 2]) - min(point_cloud[:, 2])) * resolution.z
         self.nuc_high = 2 * self.nuc_volume * 3/4 / (math.pi * self.nuc_length/2 * self.nuc_width/2)
 
+
+    def  get_cut_off_z(self, cap_bottom_ratio):
+        nuc_point_cloud = np.array(self.point_cloud)
+        nuc_z_min = min(nuc_point_cloud[:, 2])
+        nuc_z_max = max(nuc_point_cloud[:, 2])
+        cut_off_z = cap_bottom_ratio * (nuc_z_max - nuc_z_min) + nuc_z_min
+        return cut_off_z
 
     def nucleus_reco_3d(self, resolution, analysis_folder):
         points = []
@@ -63,7 +74,7 @@ class Nucleus(object):
 
             xsection_mask[xsection_mask == 255] = 1
             xsection_img = np.multiply(xsection_img, xsection_mask)
-            intensity += np.sum(xsection_img)
+            intensity += np.sum(xsection_img, dtype=np.int64)
 
             slice_cnts = cv2.findContours(xsection_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
             if len(slice_cnts) != 0:

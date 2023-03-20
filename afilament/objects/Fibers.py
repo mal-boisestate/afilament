@@ -34,6 +34,7 @@ class Fibers(object):
         self.fibers_list = None
         self.intensity = None
         self.is_merged = False
+        self.f_actin_signal_total_intensity = None
 
     def get_actin_cnt_objs(self, xsection_mask, xsection_img, x):
         cnts = cv2.findContours(xsection_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
@@ -43,7 +44,7 @@ class Fibers(object):
             single_cnt_mask = Contour.draw_cnt(cnt, xsection_mask.shape)
             single_cnt_mask[single_cnt_mask == 255] = 1
             single_xsection_img = np.multiply(xsection_img, single_cnt_mask)
-            intensity = np.sum(single_xsection_img)
+            intensity = np.sum(single_xsection_img, dtype=np.int64)
 
             z, y = Contour.get_cnt_center(cnt)
             actin_cnt_objs.append(ActinContour(x, y, z, cnt, intensity))
@@ -143,7 +144,7 @@ class Fibers(object):
         return actin_fibers_filtered
 
     def reconstruct(self, rot_angle, cnt_extremes, folders, unet_parm,
-                    part, fiber_min_layers_theshold, resolution, cap_bottom_ratio):
+                    part, fiber_min_layers_theshold, resolution, cap_bottom_cut_off_z):
         """
         Reconstruct fibers and saves all stat info into this Fibers objects
         ---
@@ -163,7 +164,6 @@ class Fibers(object):
         actin_3d_img, rotated_max_projection = Utils.rotate_and_get_3D(folders["cut_out_nuc"], "actin", rot_angle)
         mid_cut_img, z_start, z_end = Utils.get_yz_xsection(actin_3d_img, folders["actin_xsection"], "actin",
                                                             cnt_extremes)
-        # here as an option it is possibe to use different models for whole cell, top, bottom
         Utils.save_as_8bit(folders["actin_xsection"], folders["actin_xsection_unet"])
         run_predict_unet(folders["actin_xsection_unet"], folders["actin_mask"], unet_parm.actin_unet_model,
                          unet_parm.unet_model_scale,
@@ -174,13 +174,32 @@ class Fibers(object):
         actin_fibers = self._get_actin_fibers(fibers_3D_mask, fibers_3D_img, fiber_min_layers_theshold)
         if part == "cap" or part == "bottom":
             for fiber in actin_fibers:
-                fiber.assign_cap_or_bottom(z_start, z_end, cap_bottom_ratio)
+                fiber.assign_cap_or_bottom(cap_bottom_cut_off_z)
             filtered_actin_fibers = [fiber for fiber in actin_fibers if fiber.part == part]
             actin_fibers = filtered_actin_fibers
         self.fibers_list = actin_fibers
         self._add_fibers_aggregated_stat(resolution)
+        self.calculate_f_actin_signal_intensity(cap_bottom_cut_off_z, part, fibers_3D_img)
 
         return rotated_max_projection, mid_cut_img
+
+
+    def calculate_f_actin_signal_intensity(self, cap_bottom_cut_off_z, part, fibers_3D_img):
+
+        filtered_fibers_3D_img = None
+
+        if part == "cap":
+            filtered_fibers_3D_img = fibers_3D_img[:, :, :(int(cap_bottom_cut_off_z)+1)]
+
+        elif part == "bottom":
+            filtered_fibers_3D_img = fibers_3D_img[:, :, (int(cap_bottom_cut_off_z)+1):]
+
+        elif part == "whole":
+            filtered_fibers_3D_img = fibers_3D_img
+
+        self.f_actin_signal_total_intensity = np.sum(filtered_fibers_3D_img, dtype=np.int64)
+
+
 
     def plot(self, user_title=""):
         ax = plt.axes(projection='3d')
@@ -380,7 +399,7 @@ class Fibers(object):
             total_actin_length = total_actin_length + actin_length
             total_volume = total_volume + actin_volume
             total_num = total_num + 1
-            actin_intensity = np.sum([layer_intensity for layer_intensity in fiber.intensities])
+            actin_intensity = np.sum([layer_intensity for layer_intensity in fiber.intensities], dtype=np.int64)
             total_actin_intensity = total_actin_intensity + actin_intensity
 
         self.total_volume = total_volume

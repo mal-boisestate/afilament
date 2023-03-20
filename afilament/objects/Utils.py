@@ -188,7 +188,12 @@ def get_yz_xsection(img_3d, output_folder, identifier, cnt_extremes, unet_img_si
 
 
 def make_padding(img, final_img_size):
+
     h, w = img.shape[:2]
+
+    if max([h, w]) > final_img_size:
+        final_img_size = max([h, w])
+
     h_out = w_out = final_img_size
 
     top = (h_out - h) // 2

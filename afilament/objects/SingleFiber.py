@@ -36,7 +36,7 @@ class SingleFiber(object):
         points = np.asarray([[x, y] for x, y in zip(self.xs, self.ys)])
         self.line = np.squeeze(cv2.fitLine(points, cv2.DIST_L2, 0, 0.01, 0.01))
 
-    def assign_cap_or_bottom(self, z_start, z_end, cut_off_coef):
+    def assign_cap_or_bottom(self, cut_off_coordinate):
         """
         Check if the fiber is apical (cap) or basal (bottom) based on the mean/median of z coordinates of the given fiber.
         If the mean/median z is located in the upper cut_off_coef part, fiber is apical (cap); otherwise, the fiber is basal(bottom)
@@ -63,12 +63,19 @@ class SingleFiber(object):
         """
         mean_z = mean(self.zs)
         median_z = median(self.zs)
-        cut_off_coordinate = (z_start + (z_end - z_start) * cut_off_coef)
-        print(f"start is {z_start}, end is {z_end}\n")
         if median_z <= cut_off_coordinate:
-            self.part = "bottom"
-        else:
             self.part = "cap"
+        else:
+            self.part = "bottom"
+
+        # mean_z = mean(self.zs)
+        # median_z = median(self.zs)
+        # cut_off_coordinate = (z_start + (z_end - z_start) * cut_off_coef)
+        # print(f"start is {z_start}, end is {z_end}\n")
+        # if median_z <= cut_off_coordinate:
+        #     self.part = "bottom"
+        # else:
+        #     self.part = "cap"
 
     def find_fiber_alignment_angle(self, axis):
         alignment_pix_num = 30
@@ -102,7 +109,7 @@ class SingleFiber(object):
         actin_length = (self.xs[-1] - self.xs[0]) * resolution.x
         actin_xsection = np.mean([cv2.contourArea(cnt) for cnt in self.cnts]) * resolution.y * resolution.z
         actin_volume = actin_length * actin_xsection
-        actin_intensity = np.sum([intensity for intensity in self.intensities])
+        actin_intensity = np.sum([intensity for intensity in self.intensities], dtype=np.int64)
 
         adjacent = (self.xs[-1] - self.xs[0])
         if adjacent == 0:

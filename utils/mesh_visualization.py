@@ -143,11 +143,11 @@ def draw_merged_fibers(mesh, p, cell):
     print(f"Total merged fibers num: {total_fibers_num} | Total merged cnt num: {total_dots_num}")
 
 if __name__ == '__main__':
-    scale_x = 0.05882
-    scale_y = 0.05882
-    scale_z = 0.270
+    scale_x = 0.048
+    scale_y = 0.048
+    scale_z = 0.210
     resolution = ImgResolution(scale_x, scale_y, scale_z)
-    file_path=r"D:\BioLab\Current_experiments\afilament\2022.10.19_leica_CNT_and_LIV\2022.10.19_leica_MSC_6xLIV_10_img_32_cells\2022.10.19_leica_MSC_6xLIV_10_img_32_cells.pickle"
+    file_path=r"D:\BioLab\Current_experiments\afilament\2023.02.14_DAPI_Alexa488_LIV_Experiment\5_models_analysis_outcome_for_2imgs\1_training_set_img_CP_epoch200_W20\test_cells_bach.pickle"
     # file_path = r"D:\BioLab\Current_experiments\afilament\2022.08.09_very_first_cell_analysis_data\analysis_data\test_cells_bach.pickle"
     cells = pickle.load(open(file_path, "rb"))
     #cell = cells[0]
