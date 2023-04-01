@@ -120,8 +120,6 @@ class CellAnalyser(object):
 
         cells = []
         for i, nuc_mask in enumerate(nuclei_masks):
-            if i == 0:
-                continue
 
             logger = logging.getLogger(__name__)
 
