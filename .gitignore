@@ -20,5 +20,6 @@ temp/
 **/*.aux
 SUBMISSION*
 venv/
+!readme_pic/afilament.png
 
 
