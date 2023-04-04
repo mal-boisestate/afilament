@@ -13,7 +13,7 @@
   "is_plot_nodes": false,
   "is_auto_normalized": false,
   "is_connect_fibers": false,
-  "is_separate_cap_bottom": true,
+  "is_separate_cap_bottom": false,
   "cap_bottom_ratio": 0.4,
 
   "norm_th": 65536,

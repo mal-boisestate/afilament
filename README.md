@@ -1,126 +1,168 @@
-# PROJECT NAME
-**Recognition of BioImages based on Machine Learning algorithms**
+
+# AFilament
+AFilament is an open-source image analysis program designed to analyze confocal microscopy images of cells, specifically for 
+the reconstruction of apical and basal actin stress fibers within the nucleus area of Mesenchymal Stem Cells (MSCs) from 3D 
+confocal microscope images with fluorescent-labeled actin and nucleus channels. Its primary function is to provide a streamlined 
+and automated approach to the analysis of cellular structures by preprocessing confocal microscope images, performing deep 
+learning image segmentation, and post-processing the images to extract various features such as nuclei area and actin fibers.
+
+The program takes a confocal microscope 3D image that captures one or multiple cells and outputs aggregated statistics 
+for each cell, such as the nucleus volume, length, height, width, intensity, fiber number, length, volume, and intensity 
+separately for the apical and basal parts of the cell.
+
+![image](readme_pic/afilament.png)
+
+## Image Requirements
+AFilament was designed and trained on confocal microscope images of Mesenchymal Stem Cells (MSCs) for the reconstruction of 
+apical and basal actin stress fibers within the nucleus area. However, the program can potentially work with other types of cells as well.
+
+It's worth noting that the images used in the development of the program had corresponding resolutions, and for optimal 
+performance, it is recommended to use confocal microscope images with similar resolutions, specifically, 
+images obtained using 40x and 63x objectives.
 
 
-# DESCRIPTION
+## How to use?
 
-This project solves the problem of detecting stress fibers (parallel actin filaments) located above and below nuclei within a single cell using a confocal microscope image of this cell.
-![alt text](https://github.com/ninanikitina/BioLab/blob/master/readme_pic/research_project.png?raw=true)
+### Installation
 
-There are two parts of the project:
-1) Test part - detection volume of all nuclei in the picture with multiple nuclei. UNet model is used to detect countors of each nucleus on a picture, and the Alexnet model was used to detect real vs. reflected nucleus images on each layer.
-UNet model was trained from scratch with 300 images of 30 nuclei on different slices (no data augmentation).
-The result was compared with the result produced by the Imaris program. Test part overview and results: https://github.com/ninanikitina/BioLab/blob/master/readme_pic/Presentarion_12.18.2020.pdf
-2) Main part - detecting stress fibers. Slices of the 3D image of a single nucleus are converted from XY axis to ZY axis, and a UNet model is used to detect countors of each fiber on each slice.  
-The UNet model was trained from scratch with 40 images of different ZY slices of one nucleus (no data augmentation image).
+To install AFilament, first, clone the repository:
+
+```bash
+git clone https://github.com/mal-boisestate/afilament.git
+```
+
+Then install the required Python packages using pip:
+```bash
+pip install -r requirements.txt
+```
+Note that the installation of some packages, such as PyTorch and Bioformats, may require additional steps 
+depending on your system configuration
+
+### Usage
+After setting the appropriate parameters in  [the configuration file](###Configuration), make the desired changes in main.py, 
+save the file, and run it to analyze the desired images. 
+The program can be run by executing the main.py file with the following command:
+```bash
+python main.py
+```
+Note that you must specify the images to be analyzed by modifying the img_nums variable in main.py. For example, to analyze images 1 through 5, 
+set img_nums = range(1, 6).
+
+### Configuration
+The program uses a configuration file in JSON format to set various parameters for image analysis. 
+Here is an example of a configuration file with comments:
+```json
+{
+  // Path to the directory containing confocal microscope images
+  "confocal_img": "D:\\BioLab\\img\\2023.02.14_DAPI_Alexa488_LIV_Experiment\\LIV_sample",
+  
+  // Index of the channel containing the nuclei stain (0-based)
+  "nucleus_channel": 1,
+  
+  // Index of the channel containing the actin stain (0-based)
+  "actin_channel": 0,
+
+  // Path to the pre-trained U-Net model for actin segmentation
+  "actin_unet_model": "../unet/models/actin_models_test_file/3_training_set_img_CP_epoch200_W20.pth",
+  
+  // Path to the pre-trained U-Net model for nucleus segmentation
+  "nucleus_unet_model": "../unet/models/CP_epoch200_nucleus_zeiss_plus_6cells_weight_correction_20.pth",
+  
+  // Path to the pre-trained U-Net model for the nuclei from the top segmentation
+  "from_top_nucleus_unet_model": "../unet/models/CP_epoch200_max_pr.pth",
+  
+  // Image scale factor for the U-Net models
+  "unet_model_scale":1,
+  
+  // Threshold for the U-Net models
+  "unet_model_thrh": 0.5,
+
+  // Whether to plot the detected actin fibers
+  "is_plot_fibers": false,
+  
+  // Whether to plot the detected nodes
+  "is_plot_nodes": false,
+  
+  // Whether to auto-normalize the image
+  "is_auto_normalized": false,
+  
+  // Whether to connect the detected actin fibers
+  "is_connect_fibers": false,
+  
+  // Whether to separate the bottom part of the cap from the rest of the image
+  "is_separate_cap_bottom": false,
+  
+  // The ratio of the image height used for separating the cap bottom from the rest of the image
+  "cap_bottom_ratio": 0.4,
+
+  // The normalization threshold for the image
+  "norm_th": 65536,
+  
+  // The mode used to find the biggest object in the image
+  "find_biggest_mode": "trh",
+  
+  // The threshold used for nucleus segmentation
+  "nuc_theshold": 5,
+  
+  // The minimum number of pixels required for a nucleus to be considered for further analysis
+  "nuc_area_min_pixels_num": 30000,
+
+  // The maximum angle between two consecutive fiber segments in the same fiber
+  "fiber_joint_angle": 10,
+  
+  // The maximum distance between two consecutive fiber segments in the same fiber
+  "fiber_joint_distance": 50,
+  
+  // The minimum number of layers required for a fiber to be considered for further analysis
+  "fiber_min_layers_theshold": 40,
+  
+  // The minimum length required for a fiber to be considered for node detection
+  "node_actin_len_th": 2
+}
 
 
+```
 
-# CREDITS
+### Output Data and Statistic
+After the program has completed its run, it saves all statistical files in the "afilament/analysis_data" folder within the program directory. The program output includes the following files:
+
+actin_objects: Contains actin objects that can be visualized using plot_fibers.py script located in the utils folder.
+actin_stat: Contains files with actin fiber statistics for each particular cell.
+analysis: Contains the analysis_configuration.json file that can be used to track settings that were used for a particular program run and cell_stat.csv file that contains aggregated statistics for the program ran.
+The cell_stat.csv file includes the following data for each cell:
+
+- Nucleus volume, in cubic micrometers
+- Nucleus length, in micrometers
+- Nucleus width, in micrometers
+- Nucleus height, in micrometers
+- Nucleus total intensity
+- Total fiber number
+- Total fiber volume, in cubic micrometers
+- Total fiber length, in micrometers
+- Fiber intensity (whole)
+- F-actin signal intensity (whole)
+- Nodes total, in number
+
+If the user specifies is_separate_cap_bottom, the following additional data is included in the cell_stat.csv file:
+
+- Apical fiber number
+- Apical fiber volume, in cubic micrometers
+- Apical fiber length, in micrometers
+- Apical intensity (upper part of the cell)
+- F-actin signal intensity (apical)
+- Nodes apical, in number
+- Basal fiber number
+- Basal fiber volume, in cubic micrometers
+- Basal fiber length, in micrometers
+- Basal intensity (bottom part of the cell)
+- F-actin signal intensity (basal)
+- Nodes basal, in number
+
+## CREDITS
 
 We used Pytorch-UNet cloned from https://github.com/milesial/Pytorch-UNet by @milesial
 *Note from @milesial: Use Python 3.6 or newer*
 *Unet usage section was copied from the README file from this repository*
 
-# USAGE
-
-## Drivers
-- predict_nuclei_volumes - run prediction of nuclei volume on the image with multiple nucleus (Test part)
-
-## Multiple Nuclei Utils - Test part
-- czi_reader 
-   Reads czi files and save jpg images from two different channels separately
-   NOTE: initial jpg is 16 bits, and this script converts it to 8 bits by using hardcoded normalization.
-   The user should decide based on images preview how he would like to normalize an image.
-- cut_nuclei
-   Cuts a big image into a bunch of out 512"512 (hard codded size) images form with nuclei in the center and
-   creates a mask based on contours
-- layers_to_3D
-    Creates tif image of 3D visualization of detected nuclei
-- reconstruct_layers
-    Combine small mask images 512"512 into a big image
-- test_normalization
-    Test program to compare normalization for different thresholds
-- volume_estimation
-    Calculates the volume of all nuclei based on big reconstructed images (reconstruct_layers)
-
-## UNet
-
-### Tensorboard
-You can visualize in real time the train and test losses, the weights and gradients, along with the model predictions with tensorboard:
-
-`tensorboard --logdir=runs`
 
 
-### Prediction
-
-After training your model and saving it to MODEL.pth, you can easily test the output masks on your images via the CLI.
-
-To predict a single image and save it:
-
-`python predict.py -i image.jpg -o output.jpg`
-
-To predict a multiple images and show them without saving them:
-
-`python predict.py -i image1.jpg image2.jpg --viz --no-save`
-
-```shell script
-> python predict.py -h
-usage: predict.py [-h] [--model FILE] --input INPUT [INPUT ...]
-                  [--output INPUT [INPUT ...]] [--viz] [--no-save]
-                  [--mask-threshold MASK_THRESHOLD] [--scale SCALE]
-
-Predict masks from input images
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --model FILE, -m FILE
-                        Specify the file in which the model is stored
-                        (default: MODEL.pth)
-  --input INPUT [INPUT ...], -i INPUT [INPUT ...]
-                        filenames of input images (default: None)
-  --output INPUT [INPUT ...], -o INPUT [INPUT ...]
-                        Filenames of ouput images (default: None)
-  --viz, -v             Visualize the images as they are processed (default:
-                        False)
-  --no-save, -n         Do not save the output masks (default: False)
-  --mask-threshold MASK_THRESHOLD, -t MASK_THRESHOLD
-                        Minimum probability value to consider a mask pixel
-                        white (default: 0.5)
-  --scale SCALE, -s SCALE
-                        Scale factor for the input images (default: 0.5)
-```
-You can specify which model file to use with `--model MODEL.pth`.
-
-### Training
-
-```shell script
-> python train.py -h
-usage: train.py [-h] [-e E] [-b [B]] [-l [LR]] [-f LOAD] [-s SCALE] [-v VAL]
-
-Train the UNet on images and target masks
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -e E, --epochs E      Number of epochs (default: 5)
-  -b [B], --batch-size [B]
-                        Batch size (default: 1)
-  -l [LR], --learning-rate [LR]
-                        Learning rate (default: 0.1)
-  -f LOAD, --load LOAD  Load model from a .pth file (default: False)
-  -s SCALE, --scale SCALE
-                        Downscaling factor of the images (default: 0.5)
-  -v VAL, --validation VAL
-                        Percent of the data that is used as validation (0-100)
-                        (default: 15.0)
-
-```
-By default, the `scale` is 1
-
-The input images and target masks should be in the `data/imgs` and `data/masks` folders respectively.
-
----
-
-Original paper by Olaf Ronneberger, Philipp Fischer, Thomas Brox: [https://arxiv.org/abs/1505.04597](https://arxiv.org/abs/1505.04597)
-
-![network architecture](https://i.imgur.com/jeDVpqF.png)

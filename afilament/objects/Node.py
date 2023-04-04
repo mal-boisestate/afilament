@@ -1,13 +1,6 @@
-import os
-import glob
-import pickle
-from collections import defaultdict
-from tqdm import tqdm
 import cv2.cv2 as cv2
 import numpy as np
-import math
 import matplotlib.pyplot as plt
-import csv
 import copy
 
 from afilament.objects.SingleFiber import SingleFiber

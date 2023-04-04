@@ -2,18 +2,12 @@ import os
 import sys
 import cv2.cv2 as cv2
 import numpy as np
-import math
 from tqdm import tqdm
-import glob
-# from readlif.reader import LifFile
 from pathlib import Path
-from PIL import Image
 import math
-
-from afilament.objects import Utils
-from afilament.objects.Parameters import ImgResolution
-import javabridge
 import bioformats
+
+from afilament.objects.Parameters import ImgResolution
 
 
 # TODO this class shuld be changed, so imagies for czi old formst, czi new format and lif can be read automatically

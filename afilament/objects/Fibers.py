@@ -2,7 +2,6 @@ import csv
 import cv2.cv2 as cv2
 import numpy as np
 import matplotlib.pyplot as plt
-import math
 import statistics
 from collections import defaultdict
 from afilament.objects import Utils

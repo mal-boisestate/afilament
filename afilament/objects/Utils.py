@@ -2,7 +2,6 @@ import glob
 import os
 import cv2.cv2 as cv2
 import math
-import sys
 from afilament.objects import Contour
 import numpy as np
 import matplotlib.pyplot as plt

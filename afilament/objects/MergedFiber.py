@@ -1,8 +1,6 @@
 import numpy as np
 import math
 
-import cv2.cv2 as cv2
-from statistics import mean, median
 
 class MergedFiber(object):
     # scale_x = 0.04  # units - micrometer
