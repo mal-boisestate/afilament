@@ -20,6 +20,7 @@ It's worth noting that the images used in the development of the program had cor
 performance, it is recommended to use confocal microscope images with similar resolutions, specifically, 
 images obtained using 40x and 63x objectives.
 
+![image_example](readme_pic/Series005Snapshot all1.png)
 
 ## How to use?
 
