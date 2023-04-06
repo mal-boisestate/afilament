@@ -20,7 +20,11 @@ It's worth noting that the images used in the development of the program had cor
 performance, it is recommended to use confocal microscope images with similar resolutions, specifically, 
 images obtained using 40x and 63x objectives.
 
-![image_example](readme_pic/Series005Snapshot.png)
+<table><tr>
+<td> <img src="readme_pic/Series005Snapshot.png" alt="Drawing" style="width: 500px;"/> </td>
+<td> <img src="readme_pic/Series012Snapshot.png" alt="Drawing" style="width: 500px;"/> </td>
+</tr></table>
+
 
 ## How to use?
 
