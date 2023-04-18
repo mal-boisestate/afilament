@@ -20,8 +20,8 @@ temp/
 **/*.aux
 SUBMISSION*
 venv/
-!readme_pic/afilament.png
-!readme_pic/Series005Snapshot.png
-!readme_pic/Series012Snapshot.png
+!docs/imgs/afilament.png
+!docs/imgs/Series005Snapshot.png
+!docs/imgs/Series012Snapshot.png
 
 

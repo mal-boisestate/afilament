@@ -10,7 +10,7 @@ The program takes a confocal microscope 3D image that captures one or multiple c
 for each cell, such as the nucleus volume, length, height, width, intensity, fiber number, length, volume, and intensity 
 separately for the apical and basal parts of the cell.
 
-![image](readme_pic/afilament.png)
+![image](docs/imgs/afilament.png)
 
 ## Image Requirements
 AFilament was designed and trained on confocal microscope images of Mesenchymal Stem Cells (MSCs) for the reconstruction of 
@@ -21,8 +21,8 @@ performance, it is recommended to use confocal microscope images with similar re
 images obtained using 40x and 63x objectives.
 
 <table><tr>
-<td> <img src="readme_pic/Series005Snapshot.png" alt="Drawing" style="width: 500px;"/> </td>
-<td> <img src="readme_pic/Series012Snapshot.png" alt="Drawing" style="width: 500px;"/> </td>
+<td> <img src="docs/imgs/Series005Snapshot.png" alt="Drawing" style="width: 500px;"/> </td>
+<td> <img src="docs/imgs/Series012Snapshot.png" alt="Drawing" style="width: 500px;"/> </td>
 </tr></table>
 
 
@@ -162,6 +162,11 @@ If the user specifies is_separate_cap_bottom, the following additional data is i
 - Basal intensity (bottom part of the cell)
 - F-actin signal intensity (basal)
 - Nodes basal, in number
+
+### TENSORBOARD
+You can visualize in real time the train and test losses, the weights and gradients, along with the model predictions with tensorboard:
+
+tensorboard --logdir=runs
 
 ## CREDITS
 

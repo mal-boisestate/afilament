@@ -14,7 +14,7 @@ def main():
         config = json.load(f, object_hook=lambda d: SimpleNamespace(**d))
 
     # Specify image numbers to be analyzed
-    img_nums = range(1, 2)
+    img_nums = range(0, 16)
 
     # Set RECALCULATE to True to re-run analysis on all images
     # Set RECALCULATE to False to load previously analyzed data
@@ -47,8 +47,8 @@ def main():
                 print("An exception occurred")
 
         # Save analyzed cell data to a pickle file
-        with open('analysis_data/test_cells_bach.pickle', "wb") as file_to_save:
-            pickle.dump(all_cells, file_to_save)
+        # with open('analysis_data/test_cells_bach.pickle', "wb") as file_to_save:
+        #     pickle.dump(all_cells, file_to_save)
     else:
         # Load previously analyzed cell data from a pickle file
         all_cells = pickle.load(open('analysis_data/test_cells_bach.pickle', "rb"))

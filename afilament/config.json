@@ -1,11 +1,12 @@
 {
-  "confocal_img": "D:\\BioLab\\img\\2023.02.14_DAPI_Alexa488_LIV_Experiment\\LIV_sample",
+  "confocal_img": "D:\\BioLab\\img\\Confocal_img\\2023.02.14_DAPI_Alexa488_LIV_Experiment\\LIV_sample",
+  "output_analysis_path": "../afilament/analysis_data",
   "nucleus_channel": 1,
   "actin_channel": 0,
 
   "actin_unet_model": "../unet/models/actin_models_test_file/3_training_set_img_CP_epoch200_W20.pth",
   "nucleus_unet_model": "../unet/models/CP_epoch200_nucleus_zeiss_plus_6cells_weight_correction_20.pth",
-  "from_top_nucleus_unet_model": "../unet/models/CP_epoch200_max_pr.pth",
+  "from_top_nucleus_unet_model": "../unet/models/top_nuc_models/CP_epoch200_max_pr_20zeiss_10leica_multiple_cells.pth",
   "unet_model_scale":1,
   "unet_model_thrh": 0.5,
 
@@ -13,16 +14,16 @@
   "is_plot_nodes": false,
   "is_auto_normalized": false,
   "is_connect_fibers": false,
-  "is_separate_cap_bottom": false,
+  "is_separate_cap_bottom": true,
   "cap_bottom_ratio": 0.4,
 
   "norm_th": 65536,
-  "find_biggest_mode": "trh",
+  "find_biggest_mode": "unet",
   "nuc_theshold": 5,
   "nuc_area_min_pixels_num": 30000,
 
   "fiber_joint_angle": 10,
   "fiber_joint_distance": 50,
-  "fiber_min_layers_theshold": 40,
+  "fiber_min_layers_theshold": 10,
   "node_actin_len_th": 2
 }
