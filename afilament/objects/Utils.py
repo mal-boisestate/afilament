@@ -5,7 +5,7 @@ import math
 from afilament.objects import Contour
 import numpy as np
 import matplotlib.pyplot as plt
-from unet.predict import run_predict_unet
+from unet.predict import run_predict_unet, run_predict_unet_one_img
 
 
 def prepare_folder(folder):
@@ -230,8 +230,8 @@ def get_3d_img(input_folder):
     return img_3d
 
 
-def save_rotation_verification(cell, max_progection_img, hough_lines_img, rotated_max_projection, mid_cut_img, part,
-                               folders):
+def save_rotation_verification(cell, max_progection_img, hough_lines_img, rotated_max_projection,
+                               mid_cut_img, part, folders, unet_parm):
     """
     Save images in specify folder
     ---
@@ -250,10 +250,25 @@ def save_rotation_verification(cell, max_progection_img, hough_lines_img, rotate
     cv2.imwrite(hough_lines_file_path, hough_lines_img)
 
     # save cross section for verification
+    pixel_value = 65536 if mid_cut_img.dtype == "uint16" else 256
+    mid_cut_img_8bit = np.uint8(mid_cut_img / (pixel_value / 256))
     middle_xsection_file_path = os.path.join(folders["middle_xsection"],
                                              "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
                                              + "_" + part + "_middle_xsection.png")
-    cv2.imwrite(middle_xsection_file_path, mid_cut_img)
+    cv2.imwrite(middle_xsection_file_path, mid_cut_img_8bit)
+
+    #save cross section unet output for verification
+
+    mask_xsection_file_path = os.path.join(folders["middle_xsection"],
+                                                 "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
+                                                 + "_" + part + "_mask_xsection.png")
+
+    mid_cut_mask = run_predict_unet_one_img(middle_xsection_file_path, unet_parm.actin_unet_model, unet_parm.unet_model_scale,
+                                            unet_parm.unet_model_thrh).astype(np.uint8)
+    mid_cut_mask *= 255
+
+    cv2.imwrite(mask_xsection_file_path, mid_cut_mask)
+
 
 
 def find_biggest_nucleus_layer(temp_folders, treshold, find_biggest_mode, unet_parm=None):

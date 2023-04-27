@@ -115,7 +115,7 @@ def add_edge_nodes(actin_fibers):
     return actin_fibers, nodes
 
 
-def find_branching_nodes(not_copied_fibers, new_actin_len_th, is_plot_nodes):
+def find_branching_nodes(not_copied_fibers, new_actin_len_th, is_plot_nodes=False):
     """
     new_actin_len_th - do not breake actin if one of the part is too small
     """

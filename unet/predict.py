@@ -138,6 +138,28 @@ def run_predict_unet(folder_path, output_folder_path, model_path, scale, decisio
             logging.info("Visualizing results for image {}, close to continue ...".format(img_path))
             plot_img_and_mask(img, mask)
 
+def run_predict_unet_one_img(img_path, model_path, scale, decision_threshold):
+
+    net = UNet(n_channels=1, n_classes=1)
+
+    logging.info("Loading model {}".format(model_path))
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    logging.info(f'Using device {device}')
+    net.to(device=device)
+    net.load_state_dict(torch.load(model_path, map_location=device))
+
+    logging.info("Model loaded !")
+    img = Image.open(img_path).convert('L')
+    mask = predict_img(net=net,
+                      full_img=img,
+                      scale_factor=scale,
+                      out_threshold=decision_threshold,
+                      device=device)
+
+    return mask
+
+
 
 if __name__ == "__main__":
     args = get_args()

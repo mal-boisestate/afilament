@@ -34,6 +34,7 @@ class Fibers(object):
         self.intensity = None
         self.is_merged = False
         self.f_actin_signal_total_intensity = None
+        self.current_fiber_min_layers_theshold = 0
 
     def get_actin_cnt_objs(self, xsection_mask, xsection_img, x):
         cnts = cv2.findContours(xsection_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
@@ -50,7 +51,7 @@ class Fibers(object):
 
         return actin_cnt_objs
 
-    def _get_actin_fibers(self, mask_3d, img_3d, fiber_min_layers_theshold):
+    def _get_actin_fibers(self, mask_3d, img_3d):
         """
         Creates initial actin fibers based on the biggest intersection of actin contour on successive layers.
 
@@ -75,7 +76,6 @@ class Fibers(object):
 
             xsection_mask = mask_3d[x_slice, :, :]
             xsection_img = img_3d[x_slice, :, :]
-
 
             actin_cnt_objs = self.get_actin_cnt_objs(xsection_mask, xsection_img, x_slice)
 
@@ -138,12 +138,11 @@ class Fibers(object):
                     if child_cnt.parent is None:
                         actin_fibers.append(SingleFiber(child_cnt.x, child_cnt.y, child_cnt.z,
                                                         child_cnt.original_intensity, x_slice, child_cnt.cnt))
-        actin_fibers_filtered = [fiber for fiber in actin_fibers if fiber.n >= fiber_min_layers_theshold]
 
-        return actin_fibers_filtered
+        return actin_fibers
 
     def reconstruct(self, rot_angle, cnt_extremes, folders, unet_parm,
-                    part, fiber_min_layers_theshold, resolution, cap_bottom_cut_off_z):
+                    part, resolution, cap_bottom_cut_off_z):
         """
         Reconstruct fibers and saves all stat info into this Fibers objects
         ---
@@ -170,40 +169,38 @@ class Fibers(object):
 
         fibers_3D_mask = Utils.get_3d_img(folders["actin_mask"])
         fibers_3D_img = Utils.get_3d_img(folders["actin_xsection"])
-        actin_fibers = self._get_actin_fibers(fibers_3D_mask, fibers_3D_img, fiber_min_layers_theshold)
+        actin_fibers = self._get_actin_fibers(fibers_3D_mask, fibers_3D_img)
         if part == "cap" or part == "bottom":
             for fiber in actin_fibers:
                 fiber.assign_cap_or_bottom(cap_bottom_cut_off_z)
             filtered_actin_fibers = [fiber for fiber in actin_fibers if fiber.part == part]
             actin_fibers = filtered_actin_fibers
         self.fibers_list = actin_fibers
-        self._add_fibers_aggregated_stat(resolution)
+
         self.calculate_f_actin_signal_intensity(cap_bottom_cut_off_z, part, fibers_3D_img)
 
         return rotated_max_projection, mid_cut_img
-
 
     def calculate_f_actin_signal_intensity(self, cap_bottom_cut_off_z, part, fibers_3D_img):
 
         filtered_fibers_3D_img = None
 
         if part == "cap":
-            filtered_fibers_3D_img = fibers_3D_img[:, :, :(int(cap_bottom_cut_off_z)+1)]
+            filtered_fibers_3D_img = fibers_3D_img[:, :, :(int(cap_bottom_cut_off_z) + 1)]
 
         elif part == "bottom":
-            filtered_fibers_3D_img = fibers_3D_img[:, :, (int(cap_bottom_cut_off_z)+1):]
+            filtered_fibers_3D_img = fibers_3D_img[:, :, (int(cap_bottom_cut_off_z) + 1):]
 
         elif part == "whole":
             filtered_fibers_3D_img = fibers_3D_img
 
         self.f_actin_signal_total_intensity = np.sum(filtered_fibers_3D_img, dtype=np.int64)
 
-
-
-    def plot(self, user_title=""):
+    def plot(self, fiber_min_layers_theshold, user_title=""):
+        actin_fibers_filtered = [fiber for fiber in self.fibers_list if fiber.n >= fiber_min_layers_theshold]
         ax = plt.axes(projection='3d')
         if self.is_merged:
-            for merged_fiber in self.fibers_list:
+            for merged_fiber in actin_fibers_filtered:
                 color_x = 1.0 * np.random.randint(255) / 255
                 color_y = 1.0 * np.random.randint(255) / 255
                 color_z = 1.0 * np.random.randint(255) / 255
@@ -220,7 +217,7 @@ class Fibers(object):
             plt.show()
 
         else:
-            for fiber in self.fibers_list:
+            for fiber in actin_fibers_filtered:
                 if len(np.unique(fiber.zs)) < 1:
                     continue
                 # Draw only center points
@@ -280,16 +277,20 @@ class Fibers(object):
             rot_angle_xy = fiber.find_fiber_alignment_angle("xy")
             rot_angle_xz = fiber.find_fiber_alignment_angle("xz")
             anchor_point = (0, 0)
-            right_rotated_xy = Utils.rotate_point((right_node.x,right_node.y), anchor_point, rot_angle_xy)
+            right_rotated_xy = Utils.rotate_point((right_node.x, right_node.y), anchor_point, rot_angle_xy)
             right_rotated_xz = Utils.rotate_point((right_node.x, right_node.z), anchor_point, rot_angle_xz)
             for left_node_id, left_node in left_nodes:
-                left_rotated_xy = Utils.rotate_point((left_node.x,left_node.y), anchor_point, rot_angle_xy)
-                left_rotated_xz = Utils.rotate_point((left_node.x,left_node.z), anchor_point, rot_angle_xz)
-                distance_between_nodes = (np.linalg.norm(np.array([left_node.x, left_node.y, left_node.z/(resolution.z/resolution.x)]) - np.array([right_node.x, right_node.y, right_node.z/(resolution.z/resolution.x)])))
+                left_rotated_xy = Utils.rotate_point((left_node.x, left_node.y), anchor_point, rot_angle_xy)
+                left_rotated_xz = Utils.rotate_point((left_node.x, left_node.z), anchor_point, rot_angle_xz)
+                distance_between_nodes = (np.linalg.norm(
+                    np.array([left_node.x, left_node.y, left_node.z / (resolution.z / resolution.x)]) - np.array(
+                        [right_node.x, right_node.y, right_node.z / (resolution.z / resolution.x)])))
                 if right_rotated_xy[0] < left_rotated_xy[0] and distance_between_nodes <= max_distance:
-                    if Utils.is_point_in_pyramid(right_rotated_xy, right_rotated_xz, left_rotated_xy, left_rotated_xz, pyramid_apex_angle, fiber_joint_angle_z, max_distance, resolution):
+                    if Utils.is_point_in_pyramid(right_rotated_xy, right_rotated_xz, left_rotated_xy, left_rotated_xz,
+                                                 pyramid_apex_angle, fiber_joint_angle_z, max_distance, resolution):
                         candidate_fiber = self.fibers_list[left_node.actin_ids[0]]
-                        if candidate_fiber.n < distance_between_nodes or fiber.n < distance_between_nodes or abs(candidate_fiber.find_fiber_alignment_angle("xy")) > 60:
+                        if candidate_fiber.n < distance_between_nodes or fiber.n < distance_between_nodes or abs(
+                                candidate_fiber.find_fiber_alignment_angle("xy")) > 60:
                             continue
                         node_to_candidates[righ_node_id].append([left_node_id, distance_between_nodes])
 
@@ -327,7 +328,6 @@ class Fibers(object):
 
         return nodes, pairs
 
-
     def find_connections_old_version(self, con_angle, min_len, resolution):
         """
         The previous version of connect function does not align the pyramid's
@@ -345,13 +345,15 @@ class Fibers(object):
         node_to_candidates = defaultdict(lambda: [])
         for righ_node_id, right_node in right_nodes:
             for left_node_id, left_node in left_nodes:
-                if right_node.x < left_node.x and np.linalg.norm(np.array((right_node.x, right_node.y)) - np.array((left_node.x, left_node.y))) <= min_len:
-                    if Utils.is_point_in_pyramid_old_version(right_node.x, right_node.y, right_node.z, left_node.x, left_node.y, left_node.z,
-                                                     con_angle, min_len, resolution):
-                            node_to_candidates[righ_node_id].append([left_node_id,
-                                                                     np.sqrt((left_node.x - right_node.x) ** 2 +
-                                                                             (left_node.y - right_node.y) ** 2 +
-                                                                             (left_node.z - right_node.z) ** 2)])
+                if right_node.x < left_node.x and np.linalg.norm(
+                        np.array((right_node.x, right_node.y)) - np.array((left_node.x, left_node.y))) <= min_len:
+                    if Utils.is_point_in_pyramid_old_version(right_node.x, right_node.y, right_node.z, left_node.x,
+                                                             left_node.y, left_node.z,
+                                                             con_angle, min_len, resolution):
+                        node_to_candidates[righ_node_id].append([left_node_id,
+                                                                 np.sqrt((left_node.x - right_node.x) ** 2 +
+                                                                         (left_node.y - right_node.y) ** 2 +
+                                                                         (left_node.z - right_node.z) ** 2)])
         node_to_candidates_list = []
         for k, v in node_to_candidates.items():
             node_to_candidates[k] = sorted(v, key=lambda x: x[1])
@@ -386,12 +388,13 @@ class Fibers(object):
 
         return nodes, pairs
 
-    def _add_fibers_aggregated_stat(self, resolution):
+    def create_fibers_aggregated_stat(self, fiber_min_layers_theshold, resolution):
+        actin_fibers_filtered = [fiber for fiber in self.fibers_list if fiber.n >= fiber_min_layers_theshold]
         total_volume = 0
         total_actin_length = 0
         total_actin_intensity = 0
         total_num = 0
-        for i, fiber in enumerate(self.fibers_list):
+        for i, fiber in enumerate(actin_fibers_filtered):
             actin_length = (fiber.xs[-1] - fiber.xs[0]) * resolution.x
             actin_xsection = np.mean([cv2.contourArea(cnt) for cnt in fiber.cnts]) * resolution.y * resolution.z
             actin_volume = actin_length * actin_xsection
@@ -405,7 +408,7 @@ class Fibers(object):
         self.total_length = total_actin_length
         self.total_num = total_num
         self.intensity = total_actin_intensity
-
+        self.current_fiber_min_layers_theshold = fiber_min_layers_theshold
 
     def _update_merged_fibers_aggregated_stat(self, resolution):
         total_volume = 0
@@ -413,12 +416,13 @@ class Fibers(object):
         total_num = 0
         slopes = []
         for i, fiber in enumerate(self.fibers_list):
-            merged_actin_length_with_gaps, merged_actin_xsection, merged_actin_volume_with_gaps, merged_n, slop = fiber.get_stat(resolution)
+            merged_actin_length_with_gaps, merged_actin_xsection, merged_actin_volume_with_gaps, merged_n, slop = fiber.get_stat(
+                resolution)
             total_actin_length = total_actin_length + merged_actin_length_with_gaps
             total_volume = total_volume + merged_actin_volume_with_gaps
             total_num = total_num + 1
             slopes.append(slop)
-        if len(slopes) < 2: #Fix "statistics.StatisticsError: variance requires at least two data points"
+        if len(slopes) < 2:  # Fix "statistics.StatisticsError: variance requires at least two data points"
             self.slope_variance = 0
         else:
             self.slope_variance = statistics.variance(slopes)
@@ -427,16 +431,16 @@ class Fibers(object):
         self.total_length = total_actin_length
         self.total_num = total_num
 
-
-    def save_each_fiber_stat(self, resolution, file_path):
+    def save_each_fiber_stat(self, resolution, fiber_min_layers_theshold, file_path):
         header_row = ["ID", "Actin Length", "Actin Xsection", "Actin Volume", "Number of fiber layers", "Intensity"]
         with open(file_path, mode='w') as stat_file:
             csv_writer = csv.writer(stat_file, delimiter=',')
             csv_writer.writerow(header_row)
 
-            for fiber_id, fiber in enumerate(self.fibers_list):
-                csv_writer.writerow([str(fiber_id)] + fiber.get_stat(resolution))
+            actin_fibers_filtered = [fiber for fiber in self.fibers_list if fiber.n >= fiber_min_layers_theshold]
 
+            for fiber_id, fiber in enumerate(actin_fibers_filtered):
+                csv_writer.writerow([str(fiber_id)] + fiber.get_stat(resolution))
 
     def merge_fibers(self, fibers, nodes, pairs, resolution):
         merged_fibers = []
@@ -450,9 +454,11 @@ class Fibers(object):
             right_node = nodes[pair[1]]
             left_fiber_id = left_node.actin_ids[0]
             right_fiber_id = right_node.actin_ids[0]
-            merged_left_fiber = [merged_fiber for merged_fiber in merged_fibers if left_fiber_id in merged_fiber.fibers_ids][0]
+            merged_left_fiber = \
+            [merged_fiber for merged_fiber in merged_fibers if left_fiber_id in merged_fiber.fibers_ids][0]
             merged_fibers.remove(merged_left_fiber)
-            merged_right_fiber = [merged_fiber for merged_fiber in merged_fibers if right_fiber_id in merged_fiber.fibers_ids][0]
+            merged_right_fiber = \
+            [merged_fiber for merged_fiber in merged_fibers if right_fiber_id in merged_fiber.fibers_ids][0]
             merged_fibers.remove(merged_right_fiber)
             merged_left_fiber.merge(merged_right_fiber, left_node, right_node, resolution)
             merged_fibers.append(merged_left_fiber)
@@ -460,18 +466,3 @@ class Fibers(object):
         self.is_merged = True
         self.fibers_list = merged_fibers
         self._update_merged_fibers_aggregated_stat(resolution)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

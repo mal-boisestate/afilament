@@ -2,7 +2,6 @@ import argparse
 import logging
 import os
 import sys
-
 import torch
 import torch.nn as nn
 from torch import optim
@@ -26,9 +25,9 @@ dir_checkpoint = 'checkpoints/'
 def train_net(net,
               device,
               epochs=200,
-              batch_size=1,
+              batch_size=2,
               lr=0.001,
-              val_percent=0.1,
+              val_percent=0.15,
               save_cp=True,
               img_scale=1):
     # transform_train = DataAugmentation.get_data_augmentation_transforms()

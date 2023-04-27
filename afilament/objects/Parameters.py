@@ -15,6 +15,12 @@ class ImgResolution(object):
         self.y = y
         self.z = z
 
+class CellsImg(object):
+
+    def __init__(self, resolution, cells):
+        self.cells = cells
+        self.resolution = resolution
+
 class TestStructure(object):
 
     def __init__ (self, fibers, nodes, pairs, resolution):

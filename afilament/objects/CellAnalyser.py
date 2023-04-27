@@ -51,23 +51,22 @@ class CellAnalyser(object):
         self.is_auto_normalize = config.is_auto_normalized
         self.total_img_number = 0
         self.total_cells_number = 0
-        self.analysis_data_folders = self.get_analysis_data_folders(config.output_analysis_path)
+        self.output_data_folders = self.get_analysis_data_folders(config.output_analysis_path,
+                                                                  config.output_verification_path)
 
 
-        for folder in self.analysis_data_folders.values():
+        for folder in self.output_data_folders.values():
             Utils.prepare_folder(folder)
 
-    def get_analysis_data_folders(self, output_analysis_path):
-        analysis_data_folders = {
-            "area_ver": output_analysis_path + "/nuc_area_verification",
+    def get_analysis_data_folders(self, output_analysis_path, output_verification_path):
+        output_data_folders = {
+            "area_ver": output_verification_path + "/nuc_area_verification",
             "actin_stat": output_analysis_path + '/actin_stat',
-            "actin_objects": output_analysis_path +'/actin_objects',
-            "analysis": output_analysis_path + '/analysis',
-            "middle_xsection": '../afilament/analysis_data/middle_xsection',
-            "mesh": '../afilament/analysis_data/mesh',
-            "rotatation_verification": "../afilament/analysis_data/rotatation_verification",
+            "analysis": output_analysis_path + '/agg_stat',
+            "middle_xsection": output_verification_path + "/middle_xsection",
+            "rotatation_verification": output_verification_path + "/rotatation_verification",
         }
-        return analysis_data_folders
+        return output_data_folders
 
 
     def analyze_cell(self, img_num, cell_num, mask, reader):
@@ -98,7 +97,7 @@ class CellAnalyser(object):
 
         reader = ConfocalImgReader(self.confocal_path, self.nucleus_channel, self.actin_channel, img_num, self.norm_th)
         reader.read(temp_folders["raw"], "whole")
-        Utils.get_nuclei_masks(temp_folders, self.analysis_data_folders,
+        Utils.get_nuclei_masks(temp_folders, self.output_data_folders,
                                reader.image_path, self.nuc_theshold, self.nuc_area_min_pixels_num,
                                self.find_biggest_mode, img_num, self.unet_parm)
 
@@ -119,9 +118,9 @@ class CellAnalyser(object):
         reader = ConfocalImgReader(self.confocal_path, self.nucleus_channel, self.actin_channel, img_num, self.norm_th)
         self.img_resolution = reader.img_resolution
         reader.read(temp_folders["raw"], "whole")
-        nuclei_masks = Utils.get_nuclei_masks(temp_folders, self.analysis_data_folders,
-                                             reader.image_path, self.nuc_theshold, self.nuc_area_min_pixels_num,
-                                             self.find_biggest_mode, img_num, self.unet_parm)
+        nuclei_masks = Utils.get_nuclei_masks(temp_folders, self.output_data_folders,
+                                              reader.image_path, self.nuc_theshold, self.nuc_area_min_pixels_num,
+                                              self.find_biggest_mode, img_num, self.unet_parm)
 
         cells = []
         for i, nuc_mask in enumerate(nuclei_masks):
@@ -197,7 +196,7 @@ class CellAnalyser(object):
         # Step 4: Reconstruct the nucleus. Run reconstruction only for the "whole" cell.
         # For "cap" and "bottom" we need only fibers.
         if part == "whole":
-            cell.analyze_nucleus(rot_angle, rotated_cnt_extremes, temp_folders, self.unet_parm, self.img_resolution, self.analysis_data_folders["analysis"])
+            cell.analyze_nucleus(rot_angle, rotated_cnt_extremes, temp_folders, self.unet_parm, self.img_resolution, self.output_data_folders["analysis"])
 
         # Step 5:  Reconstruct the specified area (whole/cap/bottom) of actin fibers:
         #  a. For "cap" and "bottom": rotate the whole nucleus again.
@@ -216,9 +215,8 @@ class CellAnalyser(object):
                                                                         self.img_resolution, self.is_plot_fibers,
                                                                         self.is_connect_fibers, self.fiber_joint_angle,
                                                                         self.fiber_joint_distance, self.cap_bottom_ratio)
-        cell.find_branching(part, self.node_actin_len_th, self.is_plot_nodes)
         Utils.save_rotation_verification(cell, max_progection_img, hough_lines_img, rotated_max_projection, mid_cut_img,
-                                         part, self.analysis_data_folders)
+                                         part, self.output_data_folders, self.unet_parm)
         reader.close()
         return nucleus_mask
 
@@ -228,36 +226,24 @@ class CellAnalyser(object):
         """
         for cell in cells:
             # save actin fiber statistics
-            actin_stat_total_file_path = os.path.join(self.analysis_data_folders["actin_stat"],
+            actin_stat_total_file_path = os.path.join(self.output_data_folders["actin_stat"],
                                                       "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
                                                       + "_whole_actin_stat.csv")
-            cell.actin_total.save_each_fiber_stat(self.img_resolution, actin_stat_total_file_path)
-            actin_object_total = os.path.join(self.analysis_data_folders["actin_objects"],
-                                              "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
-                                              + "_whole_3d_actin.obj")
-            with open(actin_object_total, "wb") as file_to_save:
-                pickle.dump(cell.actin_total, file_to_save)
+            cell.actin_total.save_each_fiber_stat(self.img_resolution, self.fiber_min_layers_theshold,
+                                                  actin_stat_total_file_path)
 
             if self.is_separate_cap_bottom:
-                actin_stat_cap_file_path = os.path.join(self.analysis_data_folders["actin_stat"],
+                actin_stat_cap_file_path = os.path.join(self.output_data_folders["actin_stat"],
                                                         "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
                                                         + "_cap_actin_stat.csv")
-                cell.actin_cap.save_each_fiber_stat(self.img_resolution, actin_stat_cap_file_path)
-                actin_object_cap = os.path.join(self.analysis_data_folders["actin_objects"],
-                                                "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
-                                                + "_cap_3d_actin.obj")
-                with open(actin_object_cap, "wb") as file_to_save:
-                    pickle.dump(cell.actin_cap, file_to_save)
+                cell.actin_cap.save_each_fiber_stat(self.img_resolution, self.fiber_min_layers_theshold,
+                                                    actin_stat_cap_file_path)
 
-                actin_stat_bottom_file_path = os.path.join(self.analysis_data_folders["actin_stat"],
+                actin_stat_bottom_file_path = os.path.join(self.output_data_folders["actin_stat"],
                                                            "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
                                                            + "_bottom_actin_stat.csv")
-                cell.actin_bottom.save_each_fiber_stat(self.img_resolution, actin_stat_bottom_file_path)
-                actin_object_bottom = os.path.join(self.analysis_data_folders["actin_objects"],
-                                                   "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
-                                                   + "_bottom_3d_actin.obj")
-                with open(actin_object_bottom, "wb") as file_to_save:
-                    pickle.dump(cell.actin_bottom, file_to_save)
+                cell.actin_bottom.save_each_fiber_stat(self.img_resolution, self.fiber_min_layers_theshold,
+                                                       actin_stat_bottom_file_path)
 
 
     def save_aggregated_cells_stat(self, cells):
@@ -307,39 +293,161 @@ class CellAnalyser(object):
                           "F-actin_signal_intensity_cap", "F-actin_signal_intensity_bottom",
                            "Nodes_total, #", "Nodes_total, #", "Nodes_bottom, #"
                           ]
-            path = os.path.join(self.analysis_data_folders["analysis"], 'cell_stat.csv')
+            path = os.path.join(self.output_data_folders["analysis"], 'aggregated_stat.csv')
             with open(path, mode='w') as stat_file:
                 csv_writer = csv.writer(stat_file, delimiter=',')
                 csv_writer.writerow(header_row)
                 for cell in cells:
-                    csv_writer.writerow([str(self.confocal_path)] + cell.get_aggregated_cell_stat(self.is_separate_cap_bottom))
+                    csv_writer.writerow([str(self.confocal_path)] + cell.get_aggregated_cell_stat(
+                        self.is_separate_cap_bottom,
+                        self.fiber_min_layers_theshold,
+                        self.img_resolution,
+                        self.node_actin_len_th
+                    ))
         else:
             header_row = ["Image_name","Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre",
                           "Nucleus_width, micrometre", "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre",
                           "Nucleus_total_intensity", "Total_fiber_num",
                           "Total_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",
                           "Fiber_intensity_whole", "F-actin_signal_intensity_whole", "Nodes_total, #"]
-            path = os.path.join(self.analysis_data_folders["analysis"], 'cell_stat.csv')
+            path = os.path.join(self.output_data_folders["analysis"], 'cell_stat.csv')
             with open(path, mode='w') as stat_file:
                 csv_writer = csv.writer(stat_file, delimiter=',')
                 csv_writer.writerow(header_row)
                 for cell in cells:
-                    csv_writer.writerow([str(self.confocal_path)] + cell.get_aggregated_cell_stat(self.is_separate_cap_bottom))
+                    csv_writer.writerow([str(self.confocal_path)] + cell.get_aggregated_cell_stat(
+                        self.is_separate_cap_bottom,
+                        self.fiber_min_layers_theshold,
+                        self.img_resolution,
+                        self.node_actin_len_th
+                    ))
 
         print("Stat created")
 
-    def save_config(self):
+    def add_aggregated_cells_stat(self, cell_stat_list, cells):
+        """
+        Save aggregated statistical data in the file specified in folders["agreg_stat"] list
+        Each raw of this file represent a cell, colums names are:
+        - "Image_name"
+        - "Image_number"
+        - "Cell_num"
+        - "Nucleus_volume, cubic_micrometre"
+        - "Nucleus_length, micrometre",
+        - "Nucleus_width, micrometre",
+        - "Nucleus_high, micrometre"
+        - "Nucleus_high_alternative, micrometre"
+        - "Nucleus_total_intensity"
+        - "Total_fiber_num",
+        - "Cap_fiber_num"
+        - "Bottom_fiber_num",
+        - "Total_fiber_volume, cubic_micrometre"
+        - "Cap_fiber_volume, cubic_micrometre"
+        - "Bottom_fiber_volume, cubic_micrometre"
+        - "Total_fiber_length, micrometre"
+        - "Cap_fiber_length, micrometre"
+        - "Bottom_fiber_length, micrometre"
+        - "Fiber_intensity_whole"
+        - "Fiber_intensity_cap"
+        - "Fiber_intensity_bottom"
+        - "F-actin_signal_intensity_whole"
+        - "F-actin_signal_intensity_cap"
+        - "F-actin_signal_intensity_bottom"
+        - "Nodes_total, #"
+        - "Nodes_total, #"
+        - "Nodes_bottom, #"
+        """
+        for cell in cells:
+            cell_stat_list.append([str(self.confocal_path)] + cell.get_aggregated_cell_stat(
+                self.is_separate_cap_bottom,
+                self.fiber_min_layers_theshold,
+                self.img_resolution,
+                self.node_actin_len_th
+            ))
+        return cell_stat_list
+
+    def save_aggregated_cells_stat_list(self, stat_list):
+        """
+        Save aggregated statistical data in the file specified in folders["agreg_stat"] list
+        Each raw of this file represent a cell, colums names are:
+        - "Image_name"
+        - "Image_number"
+        - "Cell_num"
+        - "Nucleus_volume, cubic_micrometre"
+        - "Nucleus_length, micrometre",
+        - "Nucleus_width, micrometre",
+        - "Nucleus_high, micrometre"
+        - "Nucleus_high_alternative, micrometre"
+        - "Nucleus_total_intensity"
+        - "Total_fiber_num",
+        - "Cap_fiber_num"
+        - "Bottom_fiber_num",
+        - "Total_fiber_volume, cubic_micrometre"
+        - "Cap_fiber_volume, cubic_micrometre"
+        - "Bottom_fiber_volume, cubic_micrometre"
+        - "Total_fiber_length, micrometre"
+        - "Cap_fiber_length, micrometre"
+        - "Bottom_fiber_length, micrometre"
+        - "Fiber_intensity_whole"
+        - "Fiber_intensity_cap"
+        - "Fiber_intensity_bottom"
+        - "F-actin_signal_intensity_whole"
+        - "F-actin_signal_intensity_cap"
+        - "F-actin_signal_intensity_bottom"
+        - "Nodes_total, #"
+        - "Nodes_total, #"
+        - "Nodes_bottom, #"
+        """
+        if self.is_separate_cap_bottom:
+            header_row = ["Image_name", "Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre",
+                          "Nucleus_length, micrometre", "Nucleus_width, micrometre",
+                          "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre",
+                          "Nucleus_total_intensity", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num",
+                          "Total_fiber_volume, cubic_micrometre",
+                          "Cap_fiber_volume, cubic_micrometre", "Bottom_fiber_volume, cubic_micrometre",
+                          "Total_fiber_length, micrometre",
+                          "Cap_fiber_length, micrometre", "Bottom_fiber_length, micrometre",
+                          "Fiber_intensity_whole",
+                          "Fiber_intensity_cap", "Fiber_intensity_bottom",
+                          "F-actin_signal_intensity_whole",
+                          "F-actin_signal_intensity_cap", "F-actin_signal_intensity_bottom",
+                           "Nodes_total, #", "Nodes_total, #", "Nodes_bottom, #"
+                          ]
+
+        else:
+            header_row = ["Image_name","Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre",
+                          "Nucleus_width, micrometre", "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre",
+                          "Nucleus_total_intensity", "Total_fiber_num",
+                          "Total_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",
+                          "Fiber_intensity_whole", "F-actin_signal_intensity_whole", "Nodes_total, #"]
+
+        path = os.path.join(self.output_data_folders["analysis"], 'cell_stat.csv')
+        with open(path, mode='w') as stat_file:
+            csv_writer = csv.writer(stat_file, delimiter=',')
+            csv_writer.writerow(header_row)
+            for raw in stat_list:
+                csv_writer.writerow(raw)
+
+        print("Aggregated stat created")
+
+    def save_config(self, is_recalculated, img_folder):
         # Add additional information
         analysis_date = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
         self.initial_conf.analysis_date_time = analysis_date
         self.initial_conf.total_img_number = self.total_img_number
         self.initial_conf.total_cells_number = self.total_cells_number
+        self.initial_conf.fiber_min_layers_theshold = self.fiber_min_layers_theshold
         # Serializing json
         json_conf_str = json.dumps(self.initial_conf, indent=4, default=lambda o: o.__dict__,
             sort_keys=True)
 
-        # Writing to sample.json
-        file_path = os.path.join(self.analysis_data_folders["analysis"], "analysis_configurations.json")
+        if is_recalculated:
+            # Writing to sample.json in analysis output folder
+            file_path = os.path.join(img_folder, "analysis_configurations.json")
+            with open(file_path, "w") as outfile:
+                outfile.write(json_conf_str)
+
+        # Writing to sample.json in analysis output folder
+        file_path = os.path.join(self.output_data_folders["analysis"], "analysis_configurations.json")
         with open(file_path, "w") as outfile:
             outfile.write(json_conf_str)
 

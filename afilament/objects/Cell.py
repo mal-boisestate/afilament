@@ -62,8 +62,7 @@ class Cell(object):
 
 
         rotated_max_projection, mid_cut_img = fibers.reconstruct(rot_angle, rotated_cnt_extremes, folders,
-                                                                 unet_parm, part, fiber_min_layers_theshold,
-                                                                 resolution, cap_bottom_cut_off_z)
+                                                                 unet_parm, part, resolution, cap_bottom_cut_off_z)
         if is_connect_fibers:
             fiber_joint_angle_z = math.degrees(math.atan(self.nucleus.nuc_length/(self.nucleus.nuc_high/2))) #Fiber join angle for z axis is calculated based on nucleus height and length so the algorithm considers curve surface of nucleus
             nodes, pairs = fibers.find_connections(fiber_joint_angle, fiber_joint_angle_z, fiber_joint_distance, resolution)
@@ -103,31 +102,47 @@ class Cell(object):
         else:
             raise ValueError(f"argument part should be whole, cap, or bottom, but {part} is specified")
         if is_plot_fibers:
-            fibers.plot()
+            fibers.plot(fiber_min_layers_theshold)
         return rotated_max_projection, mid_cut_img
 
 
-    def find_branching(self, part, new_actin_len_th, is_plot_nodes):
-        if part == "whole":
-            self.actin_total_with_nodes, self.total_nodes = Node.find_branching_nodes(self.actin_total.fibers_list, new_actin_len_th, is_plot_nodes)
-        elif part == "cap":
-            self.actin_cap_with_nodes, self.cap_nodes = Node.find_branching_nodes(self.actin_cap.fibers_list, new_actin_len_th, is_plot_nodes)
-        elif part == "bottom":
-            self.actin_bottom_with_nodes, self.bottom_nodes = Node.find_branching_nodes(self.actin_bottom.fibers_list, new_actin_len_th, is_plot_nodes)
+    def find_branching(self, fiber_min_layers_theshold, new_actin_len_th):
+        if self.actin_total:
+            actin_fibers_filtered = [fiber for fiber in self.actin_total.fibers_list if fiber.n >= fiber_min_layers_theshold]
+            self.actin_total_with_nodes, self.total_nodes = Node.find_branching_nodes(actin_fibers_filtered,
+                                                                                      new_actin_len_th)
+        if self.actin_cap:
+            actin_fibers_filtered = [fiber for fiber in self.actin_cap.fibers_list if fiber.n >= fiber_min_layers_theshold]
+            self.actin_cap_with_nodes, self.cap_nodes = Node.find_branching_nodes(actin_fibers_filtered,
+                                                                                  new_actin_len_th)
+        if self.actin_bottom:
+            actin_fibers_filtered = [fiber for fiber in self.actin_bottom.fibers_list if fiber.n >= fiber_min_layers_theshold]
+            self.actin_bottom_with_nodes, self.bottom_nodes = Node.find_branching_nodes(actin_fibers_filtered,
+                                                                                        new_actin_len_th)
 
-    def get_aggregated_cell_stat(self, is_separate_cap_bottom):
+    def get_aggregated_cell_stat(self, is_separate_cap_bottom, fiber_min_layers_theshold, resolution, node_actin_len_th):
         """
-        [_, "Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre", "Nucleus_width, micrometre",
-         "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre", "Nucleus_total_intensity",", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num", "Total_fiber_volume, cubic_micrometre",
-         "Cap_fiber_volume, cubic_micrometre", "Bottom_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",
+        [_, "Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre",
+        "Nucleus_width, micrometre", "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre",
+        "Nucleus_total_intensity", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num",
+        "Total_fiber_volume, cubic_micrometre", "Cap_fiber_volume, cubic_micrometre",
+        "Bottom_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",
          "Cap_fiber_length, micrometre", "Bottom_fiber_length, micrometre",
          "Fiber_intensity_whole", "Fiber_intensity_cap", "Fiber_intensity_bottom",
          "F-actin_signal_intensity_whole", "F-actin_signal_intensity_cap", "F-actin_signal_intensity_bottom",
          "Nodes_total, #", "Nodes_total, #", "Nodes_bottom, #"]
         """
+
+        self.find_branching(fiber_min_layers_theshold, node_actin_len_th)
+
         if is_separate_cap_bottom:
+            self.actin_total.create_fibers_aggregated_stat(fiber_min_layers_theshold, resolution)
+            self.actin_cap.create_fibers_aggregated_stat(fiber_min_layers_theshold, resolution)
+            self.actin_bottom.create_fibers_aggregated_stat(fiber_min_layers_theshold, resolution)
+
             return [self.img_number, self.number, self.nucleus.nuc_volume, self.nucleus.nuc_length,
-                    self.nucleus.nuc_width, self.nucleus.nuc_high, self.nucleus.nuc_high_alternative, self.nucleus.nuc_intensity,
+                    self.nucleus.nuc_width, self.nucleus.nuc_high, self.nucleus.nuc_high_alternative,
+                    self.nucleus.nuc_intensity,
                     self.actin_total.total_num, self.actin_cap.total_num, self.actin_bottom.total_num,
                     self.actin_total.total_volume, self.actin_cap.total_volume, self.actin_bottom.total_volume,
                     self.actin_total.total_length, self.actin_cap.total_length, self.actin_bottom.total_length,
@@ -136,9 +151,11 @@ class Cell(object):
                     self.actin_bottom.f_actin_signal_total_intensity,
                     len(self.total_nodes), len(self.cap_nodes), len(self.bottom_nodes)]
         else:
+            self.actin_total.create_fibers_aggregated_stat(fiber_min_layers_theshold, resolution)
             return [self.img_number, self.number, self.nucleus.nuc_volume, self.nucleus.nuc_length,
                     self.nucleus.nuc_width, self.nucleus.nuc_high, self.nucleus.nuc_high_alternative,
-                    self.nucleus.nuc_intensity, self.actin_total.total_num, self.actin_total.total_volume, self.actin_total.total_length,
+                    self.nucleus.nuc_intensity, self.actin_total.total_num, self.actin_total.total_volume,
+                    self.actin_total.total_length,
                     self.actin_total.intensity, self.actin_total.f_actin_signal_total_intensity, len(self.total_nodes)]
 
 
