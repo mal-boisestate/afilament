@@ -291,7 +291,7 @@ class CellAnalyser(object):
                           "Fiber_intensity_cap", "Fiber_intensity_bottom",
                           "F-actin_signal_intensity_whole",
                           "F-actin_signal_intensity_cap", "F-actin_signal_intensity_bottom",
-                           "Nodes_total, #", "Nodes_total, #", "Nodes_bottom, #"
+                           "Nodes_total, #", "Nodes_cap, #", "Nodes_bottom, #"
                           ]
             path = os.path.join(self.output_data_folders["analysis"], 'aggregated_stat.csv')
             with open(path, mode='w') as stat_file:
@@ -410,7 +410,7 @@ class CellAnalyser(object):
                           "Fiber_intensity_cap", "Fiber_intensity_bottom",
                           "F-actin_signal_intensity_whole",
                           "F-actin_signal_intensity_cap", "F-actin_signal_intensity_bottom",
-                           "Nodes_total, #", "Nodes_total, #", "Nodes_bottom, #"
+                           "Nodes_total, #", "Nodes_cap, #", "Nodes_bottom, #"
                           ]
 
         else:
