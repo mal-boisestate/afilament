@@ -104,6 +104,97 @@ def plot_nodes(actin_fibers, nodes):
 
     plt.show()
 
+def plot_branching_nodes(actin_fibers, nodes, min_fiber_length, resolution,
+                         structure, img_num, cell_num):
+    """
+    Plot actin fibers and branching nodes in 3D space.
+
+    Parameters:
+        actin_fibers (object): ActinFiber objects.
+        nodes (list): A list of Node objects.
+    """
+
+    def plot_actin_fibers(fig_ax):
+        """
+        Plot actin fibers in 3D space.
+        """
+
+        # Set up colors for each fiber
+        colors = np.random.rand(len(actin_fibers_filtered), 3)
+        reference_xsection_um = 30
+
+        # Plot each fiber
+        for i, fiber in enumerate(actin_fibers_filtered):
+            if len(np.unique(fiber.zs)) < 1:
+                continue
+
+            # Draw only center points
+            xdata = fiber.xs
+            ydata = fiber.ys
+            zdata = fiber.zs
+            fiber_weight = np.mean([cv2.contourArea(cnt) for cnt in fiber.cnts]) / reference_xsection_um
+
+            if xdata:
+                fig_ax.scatter3D(
+                    xdata, ydata, zdata,
+                    c=[colors[i]], cmap='Greens', s=100*fiber_weight, alpha=0.2
+                )
+
+    def plot_branching_nodes(fig_ax):
+        """
+        Plot branching nodes in 3D space.
+        """
+        # Collect data for branching nodes
+        xdata, ydata, zdata = [], [], []
+
+        # Branching is a node that has more than one actin
+        for node in branching_nodes:
+            if len(node.actin_ids) > 1:
+                xdata.append(node.x)
+                ydata.append(node.y)
+                zdata.append(node.z)
+
+        # Set up color for branching nodes
+        color = [1.0, 0, 0]
+
+        # Plot branching nodes
+        if xdata:
+            fig_ax.scatter3D(xdata, ydata, zdata, c=[color] * len(xdata), s=100, cmap='Greens', depthshade=False)
+
+    actin_fibers_filtered = [fiber for fiber in actin_fibers.fibers_list if fiber.n >= min_fiber_length]
+    branching_nodes = [node for node in nodes if len(node.actin_ids) > 1]
+
+    # Set up figure
+    fig = plt.figure()
+    fig_ax = fig.add_subplot(111, projection='3d')
+
+    # Plot actin fibers and branching nodes
+    plot_actin_fibers(fig_ax)
+    plot_branching_nodes(fig_ax)
+
+    # Add annotations
+    fig_ax.text2D(
+        1.05, 0.60,
+        f"Min fiber len threshold: {min_fiber_length * resolution.x:.2f} \u03BCm\n"
+        f"Fiber number: {actin_fibers.total_num}\n"
+        f"Fiber length (total): {actin_fibers.total_length:.2f} \u03BCm\n"
+        f"Fiber volume (total): {actin_fibers.total_volume:.2f} $\u03BCm^3$\n"
+        f"Fiber intensity (total): {actin_fibers.intensity/10**6:.0f} * $10^6$\n"
+        f"Nurbanu branching coef.: N/A\n"
+        f"Total nodes: {len(nodes)}\n"
+        f"Branching nodes: {len(branching_nodes)}\n",
+        transform=fig_ax.transAxes,
+        linespacing=2,
+        size=11,
+        bbox=dict(boxstyle="square,pad=0.5", fc="lightblue")
+    )
+
+    plt.title(f"Actin fiber {structure} of \n"
+              f"image # {img_num}, cell # {cell_num}")
+
+    # Show plot
+    plt.show()
+
 
 def add_edge_nodes(actin_fibers):
     nodes = []
@@ -115,11 +206,11 @@ def add_edge_nodes(actin_fibers):
     return actin_fibers, nodes
 
 
-def find_branching_nodes(not_copied_fibers, new_actin_len_th, is_plot_nodes=False):
+def find_branching_nodes(fibers, new_actin_len_th, is_plot_nodes=False):
     """
     new_actin_len_th - do not breake actin if one of the part is too small
     """
-    actin_fibers = copy.deepcopy(not_copied_fibers)
+    actin_fibers = copy.deepcopy(fibers)
     actin_fibers, nodes = add_edge_nodes(actin_fibers)
 
     for left_node in nodes[::2]:

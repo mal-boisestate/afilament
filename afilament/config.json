@@ -1,5 +1,5 @@
 {
-  "confocal_img": "D:\\BioLab\\img\\Confocal_img\\2023.02.14_DAPI_Alexa488_LIV_Experiment\\LIV_sample",
+  "confocal_img": "D:\\BioLab\\img\\Confocal_img\\initial_image",
   "output_analysis_path": "../afilament/analysis_data",
   "output_verification_path": "../afilament/verification_data",
   "imgs_objects": "../afilament/img_objects",
@@ -19,13 +19,13 @@
   "is_separate_cap_bottom": true,
   "cap_bottom_ratio": 0.4,
 
-  "norm_th": 65536,
-  "find_biggest_mode": "unet",
-  "nuc_theshold": 5,
+  "norm_th": 10000,
+  "find_biggest_mode": "trh",
+  "nuc_theshold": 3,
   "nuc_area_min_pixels_num": 30000,
 
   "fiber_joint_angle": 10,
   "fiber_joint_distance": 50,
   "fiber_min_layers_theshold": 5,
-  "node_actin_len_th": 2
+  "node_actin_len_th": 0
 }

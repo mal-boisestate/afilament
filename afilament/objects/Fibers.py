@@ -142,7 +142,7 @@ class Fibers(object):
         return actin_fibers
 
     def reconstruct(self, rot_angle, cnt_extremes, folders, unet_parm,
-                    part, resolution, cap_bottom_cut_off_z):
+                    part, resolution, cap_bottom_cut_off_z, norm_th):
         """
         Reconstruct fibers and saves all stat info into this Fibers objects
         ---
@@ -162,7 +162,7 @@ class Fibers(object):
         actin_3d_img, rotated_max_projection = Utils.rotate_and_get_3D(folders["cut_out_nuc"], "actin", rot_angle)
         mid_cut_img, z_start, z_end = Utils.get_yz_xsection(actin_3d_img, folders["actin_xsection"], "actin",
                                                             cnt_extremes)
-        Utils.save_as_8bit(folders["actin_xsection"], folders["actin_xsection_unet"])
+        Utils.save_as_8bit(folders["actin_xsection"], folders["actin_xsection_unet"], norm_th)
         run_predict_unet(folders["actin_xsection_unet"], folders["actin_mask"], unet_parm.actin_unet_model,
                          unet_parm.unet_model_scale,
                          unet_parm.unet_model_thrh)

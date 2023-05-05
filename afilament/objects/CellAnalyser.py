@@ -120,22 +120,22 @@ class CellAnalyser(object):
         reader.read(temp_folders["raw"], "whole")
         nuclei_masks = Utils.get_nuclei_masks(temp_folders, self.output_data_folders,
                                               reader.image_path, self.nuc_theshold, self.nuc_area_min_pixels_num,
-                                              self.find_biggest_mode, img_num, self.unet_parm)
+                                              self.find_biggest_mode, img_num, self.norm_th, self.unet_parm)
 
         cells = []
         for i, nuc_mask in enumerate(nuclei_masks):
 
-            logger = logging.getLogger(__name__)
-
-            try:
+            # logger = logging.getLogger(__name__)
+            #
+            # try:
                 cell = self.analyze_cell(img_num, i, nuc_mask, reader)
                 cells.append(cell)
                 self.total_cells_number += 1
 
-            except Exception as e:
-                logger.error(f"\n----------- \n Img #{img_num} from imege num {img_num} cell num {i} was not analysed. "
-                                     f"\n Error: {e} \n----------- \n")
-                print("An exception occurred")
+            # except Exception as e:
+            #     logger.error(f"\n----------- \n Img #{img_num} from imege num {img_num} cell num {i} was not analysed. "
+            #                          f"\n Error: {e} \n----------- \n")
+            #     print("An exception occurred")
 
             # cell = self.analyze_cell(img_num, i, nuc_mask, reader)
             #
@@ -188,7 +188,7 @@ class CellAnalyser(object):
         # for further visual verification.
         # Finding the rotation angle for "whole" cell based on all layers, for "cap" on upper half, for "bottom" on lower "half"
         # Rotate mask, so area of interest can be catted again after rotation all layers.
-        rot_angle, max_progection_img, hough_lines_img = Utils.find_rotation_angle(temp_folders["cut_out_nuc"])
+        rot_angle, max_progection_img, hough_lines_img = Utils.find_rotation_angle(temp_folders["cut_out_nuc"], self.norm_th)
         rotated_mask = Utils.rotate_bound(nucleus_mask, rot_angle)
         rotated_cnt = Contour.get_mask_cnt(rotated_mask)
         rotated_cnt_extremes = Contour.get_cnt_extremes(rotated_cnt)
@@ -196,7 +196,8 @@ class CellAnalyser(object):
         # Step 4: Reconstruct the nucleus. Run reconstruction only for the "whole" cell.
         # For "cap" and "bottom" we need only fibers.
         if part == "whole":
-            cell.analyze_nucleus(rot_angle, rotated_cnt_extremes, temp_folders, self.unet_parm, self.img_resolution, self.output_data_folders["analysis"])
+            cell.analyze_nucleus(rot_angle, rotated_cnt_extremes, temp_folders, self.unet_parm, self.img_resolution,
+                                 self.output_data_folders["analysis"], self.norm_th)
 
         # Step 5:  Reconstruct the specified area (whole/cap/bottom) of actin fibers:
         #  a. For "cap" and "bottom": rotate the whole nucleus again.
@@ -214,7 +215,8 @@ class CellAnalyser(object):
                                                                         self.unet_parm, part, self.fiber_min_layers_theshold,
                                                                         self.img_resolution, self.is_plot_fibers,
                                                                         self.is_connect_fibers, self.fiber_joint_angle,
-                                                                        self.fiber_joint_distance, self.cap_bottom_ratio)
+                                                                        self.fiber_joint_distance, self.cap_bottom_ratio,
+                                                                        self.norm_th)
         Utils.save_rotation_verification(cell, max_progection_img, hough_lines_img, rotated_max_projection, mid_cut_img,
                                          part, self.output_data_folders, self.unet_parm)
         reader.close()
@@ -291,7 +293,7 @@ class CellAnalyser(object):
                           "Fiber_intensity_cap", "Fiber_intensity_bottom",
                           "F-actin_signal_intensity_whole",
                           "F-actin_signal_intensity_cap", "F-actin_signal_intensity_bottom",
-                           "Nodes_total, #", "Nodes_cap, #", "Nodes_bottom, #"
+                          "Branching_nodes_total, #", "Branching_nodes_cap, #", "Branching_nodes_bottom, #"
                           ]
             path = os.path.join(self.output_data_folders["analysis"], 'aggregated_stat.csv')
             with open(path, mode='w') as stat_file:
@@ -309,7 +311,7 @@ class CellAnalyser(object):
                           "Nucleus_width, micrometre", "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre",
                           "Nucleus_total_intensity", "Total_fiber_num",
                           "Total_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",
-                          "Fiber_intensity_whole", "F-actin_signal_intensity_whole", "Nodes_total, #"]
+                          "Fiber_intensity_whole", "F-actin_signal_intensity_whole", "Branching_nodes_total, #"]
             path = os.path.join(self.output_data_folders["analysis"], 'cell_stat.csv')
             with open(path, mode='w') as stat_file:
                 csv_writer = csv.writer(stat_file, delimiter=',')
@@ -352,9 +354,9 @@ class CellAnalyser(object):
         - "F-actin_signal_intensity_whole"
         - "F-actin_signal_intensity_cap"
         - "F-actin_signal_intensity_bottom"
-        - "Nodes_total, #"
-        - "Nodes_total, #"
-        - "Nodes_bottom, #"
+        - "Branching_nodes_total, #"
+        - "Branching_nodes_cap, #"
+        - "Branching_nodes_bottom, #"
         """
         for cell in cells:
             cell_stat_list.append([str(self.confocal_path)] + cell.get_aggregated_cell_stat(
@@ -393,9 +395,9 @@ class CellAnalyser(object):
         - "F-actin_signal_intensity_whole"
         - "F-actin_signal_intensity_cap"
         - "F-actin_signal_intensity_bottom"
-        - "Nodes_total, #"
-        - "Nodes_total, #"
-        - "Nodes_bottom, #"
+        - "Branching_nodes_total, #"
+        - "Branching_nodes_cap, #"
+        - "Branching_nodes_bottom, #"
         """
         if self.is_separate_cap_bottom:
             header_row = ["Image_name", "Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre",
@@ -410,7 +412,7 @@ class CellAnalyser(object):
                           "Fiber_intensity_cap", "Fiber_intensity_bottom",
                           "F-actin_signal_intensity_whole",
                           "F-actin_signal_intensity_cap", "F-actin_signal_intensity_bottom",
-                           "Nodes_total, #", "Nodes_cap, #", "Nodes_bottom, #"
+                          "Branching_nodes_total, #", "Branching_nodes_cap, #", "Branching_nodes_bottom, #"
                           ]
 
         else:
@@ -418,7 +420,7 @@ class CellAnalyser(object):
                           "Nucleus_width, micrometre", "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre",
                           "Nucleus_total_intensity", "Total_fiber_num",
                           "Total_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",
-                          "Fiber_intensity_whole", "F-actin_signal_intensity_whole", "Nodes_total, #"]
+                          "Fiber_intensity_whole", "F-actin_signal_intensity_whole", "Branching_nodes_total, #"]
 
         path = os.path.join(self.output_data_folders["analysis"], 'cell_stat.csv')
         with open(path, mode='w') as stat_file:

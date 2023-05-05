@@ -15,11 +15,11 @@ from afilament.objects import Utils
 def main():
 
     # Specify image numbers to be analyzed
-    img_nums = range(10, 12)
+    img_nums = range(0, 1)
 
     # Set RECALCULATE to True to re-run analysis on all images
     # Set RECALCULATE to False to load previously analyzed data
-    RECALCULATE = False
+    RECALCULATE = True
 
     # Start Java virtual machine for Bioformats library
     javabridge.start_vm(class_path=bioformats.JARS)
@@ -47,7 +47,7 @@ def main():
         Utils.prepare_folder(config.imgs_objects)
         # Analyze each specified image and store cell data in all_cells list
         for img_num in img_nums:
-            try:
+            # try:
                 cells = analyser.analyze_img(img_num)
 
                 # Save analyzed image to a pickle file
@@ -56,11 +56,11 @@ def main():
                 with open(image_data_path, "wb") as file_to_save:
                     pickle.dump(cells_img, file_to_save)
 
-            except Exception as e:
-                # Log error message if analysis fails for an image
-                logger.error(f"\n----------- \n Img #{img_num} from file {config.confocal_img} was not analysed. "
-                                     f"\n Error: {e} \n----------- \n")
-                print("An exception occurred")
+            # except Exception as e:
+            #     # Log error message if analysis fails for an image
+            #     logger.error(f"\n----------- \n Img #{img_num} from file {config.confocal_img} was not analysed. "
+            #                          f"\n Error: {e} \n----------- \n")
+            #     print("An exception occurred")
     else:
         # If we rerun analysis based on previous data from config file that was in directory
         # we can use only fiber_min_layers_theshold the rest data should be saved

@@ -22,11 +22,12 @@ def prepare_folder(folder):
         os.remove(f)
 
 
-def find_max_projection(input_folder, identifier, show_img=False):
+def find_max_projection(input_folder, identifier, norm_th, show_img=False):
     object_layers = []
     for img_path in glob.glob(os.path.join(input_folder, "*_" + identifier + "_*.png")):
         layer = int(img_path.rsplit(".", 1)[0].rsplit("_", 1)[1])
         object_img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+        img_8bit = normalization(object_img, norm_th)
         object_layers.append([object_img, layer])
 
     object_layers = sorted(object_layers, key=lambda x: x[1], reverse=True)
@@ -39,7 +40,7 @@ def find_max_projection(input_folder, identifier, show_img=False):
     return max_projection_origin_size, max_progection_unet_size
 
 
-def find_rotation_angle(input_folder, rotation_trh=50):
+def find_rotation_angle(input_folder, norm_th, rotation_trh=50):
     """
     Find rotation angle based on Hough lines of edges of maximum actin projection.
     ---
@@ -53,7 +54,7 @@ def find_rotation_angle(input_folder, rotation_trh=50):
         - hough_lines_img (img): image for verification
     """
     identifier = "actin"
-    max_projection, max_progection_img = find_max_projection(input_folder, identifier)
+    max_projection, max_progection_img = find_max_projection(input_folder, identifier, norm_th)
 
     # Find the edges in the image using canny detector
     edges = cv2.Canny(max_projection, rotation_trh, 100)
@@ -145,11 +146,12 @@ def rotate_and_get_3D(input_folder, identifier, rot_angle):
     return image_3d, max_progection_img
 
 
-def save_as_8bit(input_folder, output_folder):
+def save_as_8bit(input_folder, output_folder, norm_th):
     for img_path in glob.glob(os.path.join(input_folder, "*.png")):
         object_img = cv2.imread(img_path, cv2.IMREAD_ANYDEPTH)
-        pixel_value = 65536 if object_img.dtype == "uint16" else 256
-        img_8bit = np.uint8(object_img / (pixel_value / 256))
+        img_8bit = normalization(object_img, norm_th)
+        # pixel_value = 65536 if object_img.dtype == "uint16" else 256
+        # img_8bit = np.uint8(object_img / (pixel_value / 256))
         output_img_path = os.path.join(output_folder, os.path.basename(img_path))
         cv2.imwrite(output_img_path, img_8bit)
 
@@ -402,10 +404,10 @@ def normalization(img, norm_th):
 
 
 def get_nuclei_masks(temp_folders, analysis_folder, image_path, nuc_theshold,
-                     nuc_area_min_pixels_num, find_biggest_mode, img_num, unet_parm=None):
+                     nuc_area_min_pixels_num, find_biggest_mode, img_num, norm_th, unet_parm=None):
     img_base_path = os.path.splitext(os.path.basename(image_path))[0]
     max_projection_origin_size, max_progection_unet_size = find_max_projection(temp_folders["raw"], "nucleus",
-                                                                               show_img=False)
+                                                                               norm_th, show_img=False)
     max_projection_path = os.path.join(temp_folders["nucleus_top_img"], img_base_path + ".png")
     cv2.imwrite(max_projection_path, max_projection_origin_size)
     dim = 0
@@ -461,7 +463,7 @@ def draw_and_save_cnts_verification(analysis_folder, image_path, cnts, max_proge
 
 
 def remove_edge_nuc(cnts, img_dim):  # removes cells that touch the edges of the frame
-    max_x, max_y = img_dim
+    max_y, max_x = img_dim
 
     # Countours should not touch the edges of the image
     new_cnts = []
