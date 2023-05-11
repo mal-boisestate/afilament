@@ -124,23 +124,21 @@ class CellAnalyser(object):
 
         cells = []
         for i, nuc_mask in enumerate(nuclei_masks):
+            if i > 0:
+                break
 
-            # logger = logging.getLogger(__name__)
-            #
-            # try:
+            logger = logging.getLogger(__name__)
+
+            try:
                 cell = self.analyze_cell(img_num, i, nuc_mask, reader)
                 cells.append(cell)
                 self.total_cells_number += 1
 
-            # except Exception as e:
-            #     logger.error(f"\n----------- \n Img #{img_num} from imege num {img_num} cell num {i} was not analysed. "
-            #                          f"\n Error: {e} \n----------- \n")
-            #     print("An exception occurred")
+            except Exception as e:
+                logger.error(f"\n----------- \n Img #{img_num} from imege num {img_num} cell num {i} was not analysed. "
+                                     f"\n Error: {e} \n----------- \n")
+                print("An exception occurred")
 
-            # cell = self.analyze_cell(img_num, i, nuc_mask, reader)
-            #
-            # cells.append(cell)
-            # self.total_cells_number += 1
         return cells
 
     def _run_analysis(self, cell, part, nucleus_mask, reader):

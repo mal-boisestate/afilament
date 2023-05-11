@@ -180,6 +180,7 @@ class ConfocalImgReader(object):
                 if i == cell_number:
                     img_path = current_path
                     break
+        print(img_path)
 
         return img_path, series
 

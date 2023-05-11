@@ -173,14 +173,17 @@ def visualise_nucleus(afilament_folder_path, image_index, cell_index):
 
 
 if __name__ == '__main__':
+    # afilament_folder_path = r"D:\BioLab\Current_experiments\afilament\2023.05.04_Visualisation_test\img_objects_the_cell_W200_thr3"
+    # afilament_folder_path = r"D:\BioLab\Current_experiments\afilament\2023.05.04_Visualisation_test\img_objects_the_cell_W20_thr3"
     afilament_folder_path = r"D:\BioLab\scr_2.0\afilament\img_objects"
+
     image_index = 0
     cell_index = 0
-    min_fiber_length = 2
+    min_fiber_length = 50
     node_actin_len_th = 0
     show_branching_nodes = True
     structure = StructureOptions.TOTAL
-    vis_mode = VisualizationModes.NUCLEUS
+    vis_mode = VisualizationModes.ACTIN
 
     if vis_mode not in VisualizationModes.__dict__.values():
         raise ValueError(

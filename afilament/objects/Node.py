@@ -2,6 +2,8 @@ import cv2.cv2 as cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import copy
+from termcolor import colored, cprint
+
 
 from afilament.objects.SingleFiber import SingleFiber
 
@@ -124,6 +126,7 @@ def plot_branching_nodes(actin_fibers, nodes, min_fiber_length, resolution,
         reference_xsection_um = 30
 
         # Plot each fiber
+        temp = 0
         for i, fiber in enumerate(actin_fibers_filtered):
             if len(np.unique(fiber.zs)) < 1:
                 continue
@@ -139,6 +142,25 @@ def plot_branching_nodes(actin_fibers, nodes, min_fiber_length, resolution,
                     xdata, ydata, zdata,
                     c=[colors[i]], cmap='Greens', s=100*fiber_weight, alpha=0.2
                 )
+
+                # This code maps the correspondence between fiber color and fiber number
+                # in the statistical file. It is currently commented out since the data is not necessary.
+
+                # Uncomment the following code to display fiber information:
+                # for i, fiber in enumerate(fibers):
+                #     start = (fiber.xs[0], fiber.ys[0])
+                #     end = (fiber.xs[-1], fiber.ys[1])
+                #     print(f"I am fiber {i}, I start at {start}, end at {end}")
+                #
+                #     # Add text label to plot
+                #     fig_ax.text(
+                #         -0.2, temp,
+                #         f"I am fiber {i}",
+                #         size=12,
+                #         color=colors[i]
+                #     )
+                #     temp += 0.005
+
 
     def plot_branching_nodes(fig_ax):
         """
@@ -161,6 +183,7 @@ def plot_branching_nodes(actin_fibers, nodes, min_fiber_length, resolution,
         if xdata:
             fig_ax.scatter3D(xdata, ydata, zdata, c=[color] * len(xdata), s=100, cmap='Greens', depthshade=False)
 
+
     actin_fibers_filtered = [fiber for fiber in actin_fibers.fibers_list if fiber.n >= min_fiber_length]
     branching_nodes = [node for node in nodes if len(node.actin_ids) > 1]
 
@@ -180,6 +203,7 @@ def plot_branching_nodes(actin_fibers, nodes, min_fiber_length, resolution,
         f"Fiber length (total): {actin_fibers.total_length:.2f} \u03BCm\n"
         f"Fiber volume (total): {actin_fibers.total_volume:.2f} $\u03BCm^3$\n"
         f"Fiber intensity (total): {actin_fibers.intensity/10**6:.0f} * $10^6$\n"
+        f"Fiber intensity (all f-actin signal): {actin_fibers.f_actin_signal_total_intensity/10**6:.0f} * $10^6$\n"
         f"Nurbanu branching coef.: N/A\n"
         f"Total nodes: {len(nodes)}\n"
         f"Branching nodes: {len(branching_nodes)}\n",

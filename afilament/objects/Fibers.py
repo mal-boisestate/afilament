@@ -196,6 +196,43 @@ class Fibers(object):
 
         self.f_actin_signal_total_intensity = np.sum(filtered_fibers_3D_img, dtype=np.int64)
 
+
+    #Use this function to check if KASH analysis is correct
+    def plot_old(self, user_title=""):
+        ax = plt.axes(projection='3d')
+        if self.is_merged:
+            for merged_fiber in self.fibers_list:
+                color_x = 1.0 * np.random.randint(255) / 255
+                color_y = 1.0 * np.random.randint(255) / 255
+                color_z = 1.0 * np.random.randint(255) / 255
+                for fiber in merged_fiber.fibers:
+                    if len(np.unique(fiber.zs)) < 1:
+                        continue
+                    # Draw only center points
+                    xdata = fiber.xs
+                    ydata = fiber.ys
+                    zdata = fiber.zs
+                    if xdata:
+                        ax.scatter3D(xdata, ydata, zdata, c=[[color_x, color_y, color_z]] * len(xdata), cmap='Greens')
+            plt.title(f"Merged fibers \n {user_title}")
+            plt.show()
+
+        else:
+            for fiber in self.fibers_list:
+                if len(np.unique(fiber.zs)) < 1:
+                    continue
+                # Draw only center points
+                xdata = fiber.xs
+                ydata = fiber.ys
+                zdata = fiber.zs
+                color_x = 1.0 * np.random.randint(255) / 255
+                color_y = 1.0 * np.random.randint(255) / 255
+                color_z = 1.0 * np.random.randint(255) / 255
+                if xdata:
+                    ax.scatter3D(xdata, ydata, zdata, c=[[color_x, color_y, color_z]] * len(xdata), cmap='Greens')
+            plt.title(f"Single fibers \n {user_title}")
+            plt.show()
+
     def plot(self, fiber_min_layers_theshold, user_title=""):
         actin_fibers_filtered = [fiber for fiber in self.fibers_list if fiber.n >= fiber_min_layers_theshold]
         ax = plt.axes(projection='3d')
