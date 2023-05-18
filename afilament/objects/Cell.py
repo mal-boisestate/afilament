@@ -42,7 +42,7 @@ class Cell(object):
 
 
     def analyze_actin_fibers(self, rot_angle, rotated_cnt_extremes, folders, unet_parm, part,
-                             fiber_min_layers_theshold, resolution, is_plot_fibers, is_connect_fibers,
+                             fiber_min_thr_microns, resolution, is_plot_fibers, is_connect_fibers,
                              fiber_joint_angle, fiber_joint_distance, cap_bottom_ratio, norm_th):
         """
         Run fibers analysis based on part and save results in cell (self) object
@@ -103,25 +103,25 @@ class Cell(object):
         else:
             raise ValueError(f"argument part should be whole, cap, or bottom, but {part} is specified")
         if is_plot_fibers:
-            fibers.plot(fiber_min_layers_theshold)
+            fibers.plot(fiber_min_thr_microns)
         return rotated_max_projection, mid_cut_img
 
 
-    def find_branching(self, fiber_min_layers_theshold, new_actin_len_th):
+    def find_branching(self, fiber_min_thr_microns, new_actin_len_th):
         if self.actin_total:
-            actin_fibers_filtered = [fiber for fiber in self.actin_total.fibers_list if fiber.n >= fiber_min_layers_theshold]
+            actin_fibers_filtered = [fiber for fiber in self.actin_total.fibers_list if fiber.length >= fiber_min_thr_microns]
             self.total_nodes, self.actin_total_with_nodes = Node.find_branching_nodes(actin_fibers_filtered,
                                                                                       new_actin_len_th)
         if self.actin_cap:
-            actin_fibers_filtered = [fiber for fiber in self.actin_cap.fibers_list if fiber.n >= fiber_min_layers_theshold]
+            actin_fibers_filtered = [fiber for fiber in self.actin_cap.fibers_list if fiber.length >= fiber_min_thr_microns]
             self.cap_nodes, self.actin_cap_with_nodes = Node.find_branching_nodes(actin_fibers_filtered,
                                                                                   new_actin_len_th)
         if self.actin_bottom:
-            actin_fibers_filtered = [fiber for fiber in self.actin_bottom.fibers_list if fiber.n >= fiber_min_layers_theshold]
+            actin_fibers_filtered = [fiber for fiber in self.actin_bottom.fibers_list if fiber.length >= fiber_min_thr_microns]
             self.bottom_nodes, self.actin_bottom_with_nodes = Node.find_branching_nodes(actin_fibers_filtered,
                                                                                         new_actin_len_th)
 
-    def get_aggregated_cell_stat(self, is_separate_cap_bottom, fiber_min_layers_theshold, resolution, node_actin_len_th):
+    def get_aggregated_cell_stat(self, is_separate_cap_bottom, fiber_min_thr_microns, resolution, node_actin_len_th):
         """
         [_, "Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre",
         "Nucleus_width, micrometre", "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre",
@@ -134,12 +134,12 @@ class Cell(object):
          "Branching_nodes_total, #", "Branching_nodes_cap, #", "Branching_nodes_bottom, #"]
         """
 
-        self.find_branching(fiber_min_layers_theshold, node_actin_len_th)
+        self.find_branching(fiber_min_thr_microns, node_actin_len_th)
 
         if is_separate_cap_bottom:
-            self.actin_total.create_fibers_aggregated_stat(fiber_min_layers_theshold, resolution)
-            self.actin_cap.create_fibers_aggregated_stat(fiber_min_layers_theshold, resolution)
-            self.actin_bottom.create_fibers_aggregated_stat(fiber_min_layers_theshold, resolution)
+            self.actin_total.create_fibers_aggregated_stat(fiber_min_thr_microns, resolution)
+            self.actin_cap.create_fibers_aggregated_stat(fiber_min_thr_microns, resolution)
+            self.actin_bottom.create_fibers_aggregated_stat(fiber_min_thr_microns, resolution)
             total_branching_nodes = [node for node in self.total_nodes if len(node.actin_ids) > 1]
             cap_branching_nodes = [node for node in self.cap_nodes if len(node.actin_ids) > 1]
             bottom_branching_nodes = [node for node in self.bottom_nodes if len(node.actin_ids) > 1]
@@ -155,7 +155,7 @@ class Cell(object):
                     self.actin_bottom.f_actin_signal_total_intensity,
                     len(total_branching_nodes), len(cap_branching_nodes), len(bottom_branching_nodes)]
         else:
-            self.actin_total.create_fibers_aggregated_stat(fiber_min_layers_theshold, resolution)
+            self.actin_total.create_fibers_aggregated_stat(fiber_min_thr_microns, resolution)
             total_branching_nodes = [node for node in self.total_nodes if len(node.actin_ids) > 1]
             return [self.img_number, self.number, self.nucleus.nuc_volume, self.nucleus.nuc_length,
                     self.nucleus.nuc_width, self.nucleus.nuc_high, self.nucleus.nuc_high_alternative,

@@ -17,7 +17,8 @@ class ImgResolution(object):
 
 class CellsImg(object):
 
-    def __init__(self, resolution, cells):
+    def __init__(self, img_name, resolution, cells):
+        self.name = img_name
         self.cells = cells
         self.resolution = resolution
 

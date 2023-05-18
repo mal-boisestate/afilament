@@ -3,6 +3,7 @@ import os
 import csv
 import json
 import logging
+from pathlib import Path
 from datetime import datetime
 
 from afilament.objects import Utils
@@ -35,7 +36,7 @@ class CellAnalyser(object):
         self.confocal_path = config.confocal_img
         self.nuc_theshold = config.nuc_theshold
         self.unet_parm = UnetParam(config)
-        self.fiber_min_layers_theshold = config.fiber_min_layers_theshold
+        self.fiber_min_thr_microns = config.fiber_min_threshold_microns
         self.node_actin_len_th = config.node_actin_len_th
         self.is_plot_fibers = config.is_plot_fibers
         self.is_plot_nodes = config.is_plot_nodes
@@ -124,8 +125,6 @@ class CellAnalyser(object):
 
         cells = []
         for i, nuc_mask in enumerate(nuclei_masks):
-            if i > 0:
-                break
 
             logger = logging.getLogger(__name__)
 
@@ -139,7 +138,7 @@ class CellAnalyser(object):
                                      f"\n Error: {e} \n----------- \n")
                 print("An exception occurred")
 
-        return cells
+        return cells, Path(reader.image_path).name
 
     def _run_analysis(self, cell, part, nucleus_mask, reader):
         """
@@ -210,7 +209,7 @@ class CellAnalyser(object):
             Utils.сut_out_mask(nucleus_mask, temp_folders["raw"], temp_folders["cut_out_nuc"], 'actin')
             length = (rotated_cnt_extremes.right[0] - rotated_cnt_extremes.left[0]) * self.img_resolution.x
         rotated_max_projection, mid_cut_img = cell.analyze_actin_fibers(rot_angle, rotated_cnt_extremes, temp_folders,
-                                                                        self.unet_parm, part, self.fiber_min_layers_theshold,
+                                                                        self.unet_parm, part, self.fiber_min_thr_microns,
                                                                         self.img_resolution, self.is_plot_fibers,
                                                                         self.is_connect_fibers, self.fiber_joint_angle,
                                                                         self.fiber_joint_distance, self.cap_bottom_ratio,
@@ -229,20 +228,20 @@ class CellAnalyser(object):
             actin_stat_total_file_path = os.path.join(self.output_data_folders["actin_stat"],
                                                       "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
                                                       + "_whole_actin_stat.csv")
-            cell.actin_total.save_each_fiber_stat(self.img_resolution, self.fiber_min_layers_theshold,
+            cell.actin_total.save_each_fiber_stat(self.img_resolution, self.fiber_min_thr_microns,
                                                   actin_stat_total_file_path)
 
             if self.is_separate_cap_bottom:
                 actin_stat_cap_file_path = os.path.join(self.output_data_folders["actin_stat"],
                                                         "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
                                                         + "_cap_actin_stat.csv")
-                cell.actin_cap.save_each_fiber_stat(self.img_resolution, self.fiber_min_layers_theshold,
+                cell.actin_cap.save_each_fiber_stat(self.img_resolution, self.fiber_min_thr_microns,
                                                     actin_stat_cap_file_path)
 
                 actin_stat_bottom_file_path = os.path.join(self.output_data_folders["actin_stat"],
                                                            "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
                                                            + "_bottom_actin_stat.csv")
-                cell.actin_bottom.save_each_fiber_stat(self.img_resolution, self.fiber_min_layers_theshold,
+                cell.actin_bottom.save_each_fiber_stat(self.img_resolution, self.fiber_min_thr_microns,
                                                        actin_stat_bottom_file_path)
 
 
@@ -300,7 +299,7 @@ class CellAnalyser(object):
                 for cell in cells:
                     csv_writer.writerow([str(self.confocal_path)] + cell.get_aggregated_cell_stat(
                         self.is_separate_cap_bottom,
-                        self.fiber_min_layers_theshold,
+                        self.fiber_min_thr_microns,
                         self.img_resolution,
                         self.node_actin_len_th
                     ))
@@ -317,14 +316,14 @@ class CellAnalyser(object):
                 for cell in cells:
                     csv_writer.writerow([str(self.confocal_path)] + cell.get_aggregated_cell_stat(
                         self.is_separate_cap_bottom,
-                        self.fiber_min_layers_theshold,
+                        self.fiber_min_thr_microns,
                         self.img_resolution,
                         self.node_actin_len_th
                     ))
 
         print("Stat created")
 
-    def add_aggregated_cells_stat(self, cell_stat_list, cells):
+    def add_aggregated_cells_stat(self, cell_stat_list, cells, img_name):
         """
         Save aggregated statistical data in the file specified in folders["agreg_stat"] list
         Each raw of this file represent a cell, colums names are:
@@ -357,9 +356,9 @@ class CellAnalyser(object):
         - "Branching_nodes_bottom, #"
         """
         for cell in cells:
-            cell_stat_list.append([str(self.confocal_path)] + cell.get_aggregated_cell_stat(
+            cell_stat_list.append([str(img_name)] + cell.get_aggregated_cell_stat(
                 self.is_separate_cap_bottom,
-                self.fiber_min_layers_theshold,
+                self.fiber_min_thr_microns,
                 self.img_resolution,
                 self.node_actin_len_th
             ))
@@ -435,7 +434,7 @@ class CellAnalyser(object):
         self.initial_conf.analysis_date_time = analysis_date
         self.initial_conf.total_img_number = self.total_img_number
         self.initial_conf.total_cells_number = self.total_cells_number
-        self.initial_conf.fiber_min_layers_theshold = self.fiber_min_layers_theshold
+        self.initial_conf.fiber_min_thr_microns = self.fiber_min_thr_microns
         # Serializing json
         json_conf_str = json.dumps(self.initial_conf, indent=4, default=lambda o: o.__dict__,
             sort_keys=True)

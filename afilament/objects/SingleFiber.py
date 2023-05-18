@@ -3,7 +3,7 @@ import math
 
 import cv2.cv2 as cv2
 from statistics import mean, median
-
+from afilament.objects import Contour
 
 
 class SingleFiber(object):
@@ -22,6 +22,9 @@ class SingleFiber(object):
         self.line = None
         self.merged = False
         self.part = None
+        self.length = None
+        self.volume = None
+        self.av_xsection = None
 
     def update(self, x, y, z, intensity, layer, cnt):
         self.xs.append(x)
@@ -99,6 +102,11 @@ class SingleFiber(object):
 
         return rot_angle
 
+    def add_stat(self, resolution):
+        self.length = self.calculate_fiber_length(resolution)
+        self.volume = self.get_volume(resolution)
+        self.av_xsection = self.volume / self.length
+
     def get_stat(self, resolution):
         """
         actin_length - full length of fiber
@@ -106,13 +114,93 @@ class SingleFiber(object):
         actin_volume - actin length times average xsection
         actin_intensity - sum of original intensity (8, 12, or 16 bit) of the actin fiber
         """
-        actin_length = (self.xs[-1] - self.xs[0]) * resolution.x
-        actin_xsection = np.mean([cv2.contourArea(cnt) for cnt in self.cnts]) * resolution.y * resolution.z
-        actin_volume = actin_length * actin_xsection
+
+        #Old methods, comment out for now
+        # actin_length = (self.xs[-1] - self.xs[0]) * resolution.x
+        # actin_xsection = np.mean([cv2.contourArea(cnt) for cnt in self.cnts]) * resolution.y * resolution.z
+        # actin_volume = actin_length * actin_xsection
+
         actin_intensity = np.sum([intensity for intensity in self.intensities], dtype=np.int64)
 
         adjacent = (self.xs[-1] - self.xs[0])
         if adjacent == 0:
             adjacent = 1
 
-        return [actin_length, actin_xsection, actin_volume, self.n, actin_intensity]
+        return [self.length, self.av_xsection, self.volume, self.n, actin_intensity]
+
+    def calculate_fiber_length(self, resolution):
+        """
+        Calculates the total length of the fiber based on the given resolution.
+
+        Args:
+            resolution: A `Resolution` object representing the scaling factors for each axis.
+
+        Returns:
+            The total length of the fiber.
+
+        Raises:
+            None.
+
+        """
+
+        if self.n == 1:
+            length = resolution.x
+
+        else:
+            length = 0
+            for i in range(self.n - 1):
+                point_1 = np.array([self.xs[i] * resolution.x,
+                           self.ys[i] * resolution.y,
+                           self.zs[i] * resolution.z])
+                point_2 = np.array([self.xs[i + 1] * resolution.x,
+                           self.ys[i + 1] * resolution.y,
+                           self.zs[i + 1] * resolution.z])
+
+                distance = np.linalg.norm(point_2 - point_1)
+                length += distance
+
+        return length
+
+    def get_volume(self, resolution):
+        volume = 0
+
+        for cnt in self.cnts:
+            volume += cv2.contourArea(cnt) * resolution.x * resolution.y * resolution.z
+
+        return volume
+
+    def get_length_test_k(self, resolution, k):
+
+        if self.n == 1:
+            length = resolution.x
+
+        else:
+            length = 0
+            for i in range(0, self.n - k, k):
+                point_1 = np.array([self.xs[i] * resolution.x,
+                                    self.ys[i] * resolution.y,
+                                    self.zs[i] * resolution.z])
+                point_2 = np.array([self.xs[i + k] * resolution.x,
+                                    self.ys[i + k] * resolution.y,
+                                    self.zs[i + k] * resolution.z])
+
+                distance = np.linalg.norm(point_2 - point_1)
+                length += distance
+
+            #Calculate the rest
+            for i in range(self.n - k, self.n - 1):
+                point_1 = np.array([self.xs[i] * resolution.x,
+                                    self.ys[i] * resolution.y,
+                                    self.zs[i] * resolution.z])
+                point_2 = np.array([self.xs[i + 1] * resolution.x,
+                                    self.ys[i + 1] * resolution.y,
+                                    self.zs[i + 1] * resolution.z])
+
+                distance = np.linalg.norm(point_2 - point_1)
+                length += distance
+
+
+        return length
+
+
+

@@ -56,71 +56,51 @@ set img_nums = range(1, 6).
 ### Configuration
 The program uses a configuration file in JSON format to set various parameters for image analysis. 
 Here is an example of a configuration file with comments:
+
 ```json
 {
   // Path to the directory containing confocal microscope images
   "confocal_img": "D:\\BioLab\\img\\2023.02.14_DAPI_Alexa488_LIV_Experiment\\LIV_sample",
-  
   // Index of the channel containing the nuclei stain (0-based)
   "nucleus_channel": 1,
-  
   // Index of the channel containing the actin stain (0-based)
   "actin_channel": 0,
-
   // Path to the pre-trained U-Net model for actin segmentation
   "actin_unet_model": "../unet/models/actin_models_test_file/3_training_set_img_CP_epoch200_W20.pth",
-  
   // Path to the pre-trained U-Net model for nucleus segmentation
   "nucleus_unet_model": "../unet/models/CP_epoch200_nucleus_zeiss_plus_6cells_weight_correction_20.pth",
-  
   // Path to the pre-trained U-Net model for the nuclei from the top segmentation
   "from_top_nucleus_unet_model": "../unet/models/CP_epoch200_max_pr.pth",
-  
   // Image scale factor for the U-Net models
-  "unet_model_scale":1,
-  
+  "unet_model_scale": 1,
   // Threshold for the U-Net models
   "unet_model_thrh": 0.5,
-
   // Whether to plot the detected actin fibers
   "is_plot_fibers": false,
-  
   // Whether to plot the detected nodes
   "is_plot_nodes": false,
-  
   // Whether to auto-normalize the image
   "is_auto_normalized": false,
-  
   // Whether to connect the detected actin fibers
   "is_connect_fibers": false,
-  
   // Whether to separate the bottom part of the cap from the rest of the image
   "is_separate_cap_bottom": false,
-  
   // The ratio of the image height used for separating the cap bottom from the rest of the image
   "cap_bottom_ratio": 0.4,
-
   // The normalization threshold for the image
   "norm_th": 65536,
-  
   // The mode used to find the biggest object in the image
   "find_biggest_mode": "trh",
-  
   // The threshold used for nucleus segmentation
   "nuc_theshold": 5,
-  
   // The minimum number of pixels required for a nucleus to be considered for further analysis
   "nuc_area_min_pixels_num": 30000,
-
   // The maximum angle between two consecutive fiber segments in the same fiber
   "fiber_joint_angle": 10,
-  
   // The maximum distance between two consecutive fiber segments in the same fiber
   "fiber_joint_distance": 50,
-  
   // The minimum number of layers required for a fiber to be considered for further analysis
-  "fiber_min_layers_theshold": 40,
-  
+  "fiber_min_theshold_mircons": 40,
   // The minimum length required for a fiber to be considered for node detection
   "node_actin_len_th": 2
 }

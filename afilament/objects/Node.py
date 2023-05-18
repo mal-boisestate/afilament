@@ -106,7 +106,7 @@ def plot_nodes(actin_fibers, nodes):
 
     plt.show()
 
-def plot_branching_nodes(actin_fibers, nodes, min_fiber_length, resolution,
+def plot_branching_nodes(actin_fibers, nodes, min_fiber_thr_microns, resolution,
                          structure, img_num, cell_num):
     """
     Plot actin fibers and branching nodes in 3D space.
@@ -126,7 +126,7 @@ def plot_branching_nodes(actin_fibers, nodes, min_fiber_length, resolution,
         reference_xsection_um = 30
 
         # Plot each fiber
-        temp = 0
+        temp = -0.1
         for i, fiber in enumerate(actin_fibers_filtered):
             if len(np.unique(fiber.zs)) < 1:
                 continue
@@ -143,23 +143,31 @@ def plot_branching_nodes(actin_fibers, nodes, min_fiber_length, resolution,
                     c=[colors[i]], cmap='Greens', s=100*fiber_weight, alpha=0.2
                 )
 
-                # This code maps the correspondence between fiber color and fiber number
-                # in the statistical file. It is currently commented out since the data is not necessary.
+            # This code maps the correspondence between fiber color and fiber number
+            # in the statistical file. It is currently commented out since the data is not necessary.
 
-                # Uncomment the following code to display fiber information:
-                # for i, fiber in enumerate(fibers):
-                #     start = (fiber.xs[0], fiber.ys[0])
-                #     end = (fiber.xs[-1], fiber.ys[1])
-                #     print(f"I am fiber {i}, I start at {start}, end at {end}")
-                #
-                #     # Add text label to plot
-                #     fig_ax.text(
-                #         -0.2, temp,
-                #         f"I am fiber {i}",
-                #         size=12,
-                #         color=colors[i]
-                #     )
-                #     temp += 0.005
+            # # Add text label to plot
+            # # This part of code helps match fiber color and fiber statistics. Is optional.Comment out
+            # old_len = (fiber.xs[-1] - fiber.xs[0]) * resolution.x
+            # old_xsection = np.mean([cv2.contourArea(cnt) for cnt in fiber.cnts]) * resolution.y * resolution.z
+            # old_volume = old_len * old_xsection
+            #
+            # len_each_1 = fiber.get_length_test_k(resolution, 1)
+            # len_each_2 = fiber.get_length_test_k(resolution, 2)
+            # len_each_3 = fiber.get_length_test_k(resolution, 3)
+            # len_each_5 = fiber.get_length_test_k(resolution, 5)
+            #
+            #
+            # fig_ax.text2D(
+            #     -0.2, temp,
+            #     f"OLD: {old_len:.2f} \u03BCm \n"
+            #     f"1st: {len_each_1:.2f} \u03BCm | 2nd: {len_each_2:.2f} \u03BCm | 3rd: {len_each_3:.2f} \u03BCm | 5th: {len_each_5:.2f} \u03BCm\n"
+            #     f"    1st: {(len_each_1/old_len-1)*100:.0f}%    |     2nd: {(len_each_2/old_len-1)*100:.0f}%    |     3rd: {(len_each_3/old_len-1)*100:.0f}%    |     5th: {(len_each_5/old_len-1)*100:.0f}%",
+            #     size=12,
+            #     color=colors[i]
+            # )
+            # temp += 0.02
+
 
 
     def plot_branching_nodes(fig_ax):
@@ -184,7 +192,7 @@ def plot_branching_nodes(actin_fibers, nodes, min_fiber_length, resolution,
             fig_ax.scatter3D(xdata, ydata, zdata, c=[color] * len(xdata), s=100, cmap='Greens', depthshade=False)
 
 
-    actin_fibers_filtered = [fiber for fiber in actin_fibers.fibers_list if fiber.n >= min_fiber_length]
+    actin_fibers_filtered = [fiber for fiber in actin_fibers.fibers_list if fiber.length >= min_fiber_thr_microns]
     branching_nodes = [node for node in nodes if len(node.actin_ids) > 1]
 
     # Set up figure
@@ -198,7 +206,7 @@ def plot_branching_nodes(actin_fibers, nodes, min_fiber_length, resolution,
     # Add annotations
     fig_ax.text2D(
         1.05, 0.60,
-        f"Min fiber len threshold: {min_fiber_length * resolution.x:.2f} \u03BCm\n"
+        f"Min fiber len threshold: {min_fiber_thr_microns:.2f} \u03BCm\n"
         f"Fiber number: {actin_fibers.total_num}\n"
         f"Fiber length (total): {actin_fibers.total_length:.2f} \u03BCm\n"
         f"Fiber volume (total): {actin_fibers.total_volume:.2f} $\u03BCm^3$\n"

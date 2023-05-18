@@ -23,7 +23,7 @@ def run_through_gui_recalculation(input_obj_path, output_stat_folder, fiber_min_
     with open(config_file_path, "r") as f:
         config = json.load(f, object_hook=lambda d: SimpleNamespace(**d))
     config.output_analysis_path = output_stat_folder
-    config.fiber_min_layers_theshold = fiber_min_layers_theshold
+    config.fiber_min_thr_pixels = fiber_min_layers_theshold
     config.imgs_objects = input_obj_path
     analyser = CellAnalyser(config)
 
@@ -62,7 +62,7 @@ def run_through_gui_new_analysis(bioformat_imgs_path, output_stat_folder,
     # Add user input into configuration file:
     config.actin_channel = actin_channel
     config.nucleus_channel = nuc_channel
-    config.fiber_min_layers_theshold = fiber_min_layers_theshold
+    config.fiber_min_thr_pixels = fiber_min_layers_theshold
     config.confocal_img = bioformat_imgs_path
     config.output_analysis_path = output_stat_folder
     config.imgs_objects = output_img_obj_folder

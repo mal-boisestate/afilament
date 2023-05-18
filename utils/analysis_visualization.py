@@ -72,7 +72,7 @@ def optimize_mesh(mesh, resolution):
     return final_mesh
 
 
-def visualise_actin(afilament_folder_path, image_index, cell_index, min_fiber_length, node_actin_len_th, show_branching_nodes, structure):
+def visualise_actin(afilament_folder_path, image_index, cell_index, min_fiber_thr_microns, node_actin_len_th, show_branching_nodes, structure):
     """
     Visualize the actin fibers of a cell.
 
@@ -80,7 +80,7 @@ def visualise_actin(afilament_folder_path, image_index, cell_index, min_fiber_le
         afilament_folder_path: A string representing the path to the afilament folder.
         image_index: An integer representing the index of the image to visualize.
         cell_index: An integer representing the index of the cell to visualize.
-        min_fiber_length: A float representing the minimum fiber length to include in the visualization.
+        min_fiber_thr_pixels: A float representing the minimum fiber length to include in the visualization.
         node_actin_len_th: A float representing the minimum length of actin fibers connecting branching nodes to include in the visualization.
         show_branching_nodes: A boolean indicating whether to highlight branching nodes in the visualization.
         structure: A string representing the actin structure to visualize. Must be one
@@ -100,37 +100,38 @@ def visualise_actin(afilament_folder_path, image_index, cell_index, min_fiber_le
         raise ValueError(f"Invalid cell index: {cell_index}. Must be less than: {len(cells_img.cells)}")
     cell = cells_img.cells[cell_index]
 
+
     # Get fiber statistics so we can put it on a graph. Fiber object will be updated
     if structure == StructureOptions.CAP:
-        cell.actin_cap.create_fibers_aggregated_stat(min_fiber_length, cells_img.resolution)
+        cell.actin_cap.create_fibers_aggregated_stat(min_fiber_thr_microns, cells_img.resolution)
     elif structure == StructureOptions.BOTTOM:
-        cell.actin_bottom.create_fibers_aggregated_stat(min_fiber_length, cells_img.resolution)
+        cell.actin_bottom.create_fibers_aggregated_stat(min_fiber_thr_microns, cells_img.resolution)
     else:  # structure == StructureOptions.TOTAL
-        cell.actin_total.create_fibers_aggregated_stat(min_fiber_length, cells_img.resolution)
+        cell.actin_total.create_fibers_aggregated_stat(min_fiber_thr_microns, cells_img.resolution)
 
     if show_branching_nodes:
-        cell.find_branching(min_fiber_length, node_actin_len_th)
+        cell.find_branching(min_fiber_thr_microns, node_actin_len_th)
 
         # Generate visualization
         if structure == StructureOptions.CAP:
-            plot_branching_nodes(cell.actin_cap, cell.cap_nodes, min_fiber_length, cells_img.resolution,
+            plot_branching_nodes(cell.actin_cap, cell.cap_nodes, min_fiber_thr_microns, cells_img.resolution,
                                  structure, image_index, cell_index)
         elif structure == StructureOptions.BOTTOM:
-            plot_branching_nodes(cell.actin_bottom, cell.bottom_nodes, min_fiber_length, cells_img.resolution,
+            plot_branching_nodes(cell.actin_bottom, cell.bottom_nodes, min_fiber_thr_microns, cells_img.resolution,
                                  structure, image_index, cell_index)
         else:  # structure == StructureOptions.TOTAL
-            plot_branching_nodes(cell.actin_total, cell.total_nodes, min_fiber_length, cells_img.resolution,
+            plot_branching_nodes(cell.actin_total, cell.total_nodes, min_fiber_thr_microns, cells_img.resolution,
                                  structure, image_index, cell_index)
 
     else:
 
         # Generate visualization
         if structure == StructureOptions.CAP:
-            cell.actin_cap.plot(min_fiber_length)
+            cell.actin_cap.plot(min_fiber_thr_microns)
         elif structure == StructureOptions.BOTTOM:
-            cell.actin_bottom.plot(min_fiber_length)
+            cell.actin_bottom.plot(min_fiber_thr_microns)
         else:  # structure == StructureOptions.TOTAL
-            cell.actin_total.plot(min_fiber_length)
+            cell.actin_total.plot(min_fiber_thr_microns)
 
 
 def visualise_nucleus(afilament_folder_path, image_index, cell_index):
@@ -173,13 +174,11 @@ def visualise_nucleus(afilament_folder_path, image_index, cell_index):
 
 
 if __name__ == '__main__':
-    # afilament_folder_path = r"D:\BioLab\Current_experiments\afilament\2023.05.04_Visualisation_test\img_objects_the_cell_W200_thr3"
-    # afilament_folder_path = r"D:\BioLab\Current_experiments\afilament\2023.05.04_Visualisation_test\img_objects_the_cell_W20_thr3"
     afilament_folder_path = r"D:\BioLab\scr_2.0\afilament\img_objects"
 
-    image_index = 0
-    cell_index = 0
-    min_fiber_length = 50
+    image_index = 1
+    cell_index = 1
+    min_fiber_thr_microns = 5
     node_actin_len_th = 0
     show_branching_nodes = True
     structure = StructureOptions.TOTAL
@@ -190,7 +189,7 @@ if __name__ == '__main__':
             f"Invalid visualization mode: {vis_mode}. Must be one of: {VisualizationModes.__dict__.values()}")
 
     if vis_mode == VisualizationModes.ACTIN:
-        visualise_actin(afilament_folder_path, image_index, cell_index, min_fiber_length, node_actin_len_th,
+        visualise_actin(afilament_folder_path, image_index, cell_index, min_fiber_thr_microns, node_actin_len_th,
                         show_branching_nodes, structure)
     elif vis_mode == VisualizationModes.NUCLEUS:
         visualise_nucleus(afilament_folder_path, image_index, cell_index)

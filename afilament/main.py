@@ -15,7 +15,7 @@ from afilament.objects import Utils
 def main():
 
     # Specify image numbers to be analyzed
-    img_nums = range(0, 1)
+    img_nums = range(0, 21)
 
     # Set RECALCULATE to True to re-run analysis on all images
     # Set RECALCULATE to False to load previously analyzed data
@@ -31,7 +31,7 @@ def main():
     # Load JSON configuration file.
     with open("config.json", "r") as f:
         config = json.load(f, object_hook=lambda d: SimpleNamespace(**d))
-    fiber_min_for_recalc = config.fiber_min_layers_theshold
+    fiber_min_for_recalc = config.fiber_min_threshold_microns
 
     # Set up logging to record errors
     logging.basicConfig(filename='myapp.log', level=logging.DEBUG,
@@ -48,11 +48,11 @@ def main():
         # Analyze each specified image and store cell data in all_cells list
         for img_num in img_nums:
             try:
-                cells = analyser.analyze_img(img_num)
+                cells, img_name = analyser.analyze_img(img_num)
 
                 # Save analyzed image to a pickle file
                 image_data_path = os.path.join(config.imgs_objects, "image_data_" + str(img_num) + ".pickle")
-                cells_img = CellsImg(analyser.img_resolution, cells)
+                cells_img = CellsImg(img_name, analyser.img_resolution, cells)
                 with open(image_data_path, "wb") as file_to_save:
                     pickle.dump(cells_img, file_to_save)
 
@@ -69,7 +69,7 @@ def main():
         with open(config_file_path, "r") as f:
             config = json.load(f, object_hook=lambda d: SimpleNamespace(**d))
         analyser = CellAnalyser(config)
-        analyser.fiber_min_layers_theshold = fiber_min_for_recalc
+        analyser.fiber_min_thr_microns = fiber_min_for_recalc
 
 
     # Extract statistical data
@@ -82,10 +82,15 @@ def main():
         #check if it is image file since in this folder we have config file
         if img_path.suffix == ".pickle":
             cells_img = pickle.load(open(img_path, "rb"))
+
+            #Need to be updated based on data saved in img object, since theoreticaly it can be different for each img
+            #So we do not save it in config and analyser respectfully
             analyser.img_resolution = cells_img.resolution
+            analyser.fiber_min_thr_pixels = analyser.fiber_min_thr_microns / analyser.img_resolution.x
             # Save individual cell data to CSV file
             analyser.save_cells_data(cells_img.cells)
-            aggregated_stat_list = analyser.add_aggregated_cells_stat(aggregated_stat_list, cells_img.cells)
+            aggregated_stat_list = analyser.add_aggregated_cells_stat(aggregated_stat_list, cells_img.cells,
+                                                                      cells_img.name)
 
     # Save aggregated cell statistics to CSV file
     analyser.save_aggregated_cells_stat_list(aggregated_stat_list)

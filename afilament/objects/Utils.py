@@ -27,7 +27,6 @@ def find_max_projection(input_folder, identifier, norm_th, show_img=False):
     for img_path in glob.glob(os.path.join(input_folder, "*_" + identifier + "_*.png")):
         layer = int(img_path.rsplit(".", 1)[0].rsplit("_", 1)[1])
         object_img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-        img_8bit = normalization(object_img, norm_th)
         object_layers.append([object_img, layer])
 
     object_layers = sorted(object_layers, key=lambda x: x[1], reverse=True)
@@ -147,11 +146,32 @@ def rotate_and_get_3D(input_folder, identifier, rot_angle):
 
 
 def save_as_8bit(input_folder, output_folder, norm_th):
+    """
+    Convert images in the input folder to 8-bit using a common normalization threshold and save them in the output folder.
+
+    Args:
+        input_folder (str): Path to the input folder containing PNG images.
+        output_folder (str): Path to the output folder where the 8-bit images will be saved.
+        norm_th (int): Normalization threshold value.
+
+    Returns:
+        None.
+
+    Raises:
+        None.
+
+    """
+
     for img_path in glob.glob(os.path.join(input_folder, "*.png")):
         object_img = cv2.imread(img_path, cv2.IMREAD_ANYDEPTH)
-        img_8bit = normalization(object_img, norm_th)
-        # pixel_value = 65536 if object_img.dtype == "uint16" else 256
-        # img_8bit = np.uint8(object_img / (pixel_value / 256))
+
+        #It is important to normalize using the same threshold for each image of the current image set, as using different
+        # normalization thresholds might lead to inconsistent results. Therefore, the OpenCV normalization function with the
+        # MinMax flag is not suitable in this case: img = cv2.normalize(img, None, alpha=0, beta=255, norm_type=cv2.NORM_INF, dtype=cv2.CV_8UC1)
+
+        object_img = np.clip(object_img, 0, norm_th)
+        img_8bit = np.uint8(object_img / norm_th * 255)
+
         output_img_path = os.path.join(output_folder, os.path.basename(img_path))
         cv2.imwrite(output_img_path, img_8bit)
 
@@ -395,12 +415,6 @@ def rotate_point(rotated_point, main_point, rot_angle):
     int(main_point[0] + x * math.cos(math.radians(rot_angle)) - y * math.sin(math.radians(rot_angle))),
     int(main_point[1] + x * math.sin(math.radians(rot_angle)) + y * math.cos(math.radians(rot_angle))))
     return new_coordinates
-
-
-def normalization(img, norm_th):
-    img[np.where(img > norm_th)] = norm_th
-    img = cv2.normalize(img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
-    return img
 
 
 def get_nuclei_masks(temp_folders, analysis_folder, image_path, nuc_theshold,

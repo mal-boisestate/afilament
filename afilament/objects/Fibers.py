@@ -34,7 +34,7 @@ class Fibers(object):
         self.intensity = None
         self.is_merged = False
         self.f_actin_signal_total_intensity = None
-        self.current_fiber_min_layers_theshold = 0
+        self.current_fiber_min_thr_microns = 0
 
     def get_actin_cnt_objs(self, xsection_mask, xsection_img, x):
         cnts = cv2.findContours(xsection_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
@@ -170,6 +170,8 @@ class Fibers(object):
         fibers_3D_mask = Utils.get_3d_img(folders["actin_mask"])
         fibers_3D_img = Utils.get_3d_img(folders["actin_xsection"])
         actin_fibers = self._get_actin_fibers(fibers_3D_mask, fibers_3D_img)
+        for fiber in actin_fibers:
+            fiber.add_stat(resolution)
         if part == "cap" or part == "bottom":
             for fiber in actin_fibers:
                 fiber.assign_cap_or_bottom(cap_bottom_cut_off_z)
@@ -233,8 +235,8 @@ class Fibers(object):
             plt.title(f"Single fibers \n {user_title}")
             plt.show()
 
-    def plot(self, fiber_min_layers_theshold, user_title=""):
-        actin_fibers_filtered = [fiber for fiber in self.fibers_list if fiber.n >= fiber_min_layers_theshold]
+    def plot(self, fiber_min_thr_microns, user_title=""):
+        actin_fibers_filtered = [fiber for fiber in self.fibers_list if fiber.length >= fiber_min_thr_microns]
         ax = plt.axes(projection='3d')
         if self.is_merged:
             for merged_fiber in actin_fibers_filtered:
@@ -425,18 +427,15 @@ class Fibers(object):
 
         return nodes, pairs
 
-    def create_fibers_aggregated_stat(self, fiber_min_layers_theshold, resolution):
-        actin_fibers_filtered = [fiber for fiber in self.fibers_list if fiber.n >= fiber_min_layers_theshold]
+    def create_fibers_aggregated_stat(self, fiber_min_thr_microns, resolution):
+        actin_fibers_filtered = [fiber for fiber in self.fibers_list if fiber.length >= fiber_min_thr_microns]
         total_volume = 0
         total_actin_length = 0
         total_actin_intensity = 0
         total_num = 0
         for i, fiber in enumerate(actin_fibers_filtered):
-            actin_length = (fiber.xs[-1] - fiber.xs[0]) * resolution.x
-            actin_xsection = np.mean([cv2.contourArea(cnt) for cnt in fiber.cnts]) * resolution.y * resolution.z
-            actin_volume = actin_length * actin_xsection
-            total_actin_length = total_actin_length + actin_length
-            total_volume = total_volume + actin_volume
+            total_actin_length = total_actin_length + fiber.length
+            total_volume = total_volume + fiber.volume
             total_num = total_num + 1
             actin_intensity = np.sum([layer_intensity for layer_intensity in fiber.intensities], dtype=np.int64)
             total_actin_intensity = total_actin_intensity + actin_intensity
@@ -445,7 +444,7 @@ class Fibers(object):
         self.total_length = total_actin_length
         self.total_num = total_num
         self.intensity = total_actin_intensity
-        self.current_fiber_min_layers_theshold = fiber_min_layers_theshold
+        self.current_fiber_min_thr_microns = fiber_min_thr_microns
 
     def _update_merged_fibers_aggregated_stat(self, resolution):
         total_volume = 0
@@ -468,13 +467,14 @@ class Fibers(object):
         self.total_length = total_actin_length
         self.total_num = total_num
 
-    def save_each_fiber_stat(self, resolution, fiber_min_layers_theshold, file_path):
+    def save_each_fiber_stat(self, resolution, fiber_min_thr_microns, file_path):
         header_row = ["ID", "Actin Length", "Actin Xsection", "Actin Volume", "Number of fiber layers", "Intensity"]
+
         with open(file_path, mode='w') as stat_file:
             csv_writer = csv.writer(stat_file, delimiter=',')
             csv_writer.writerow(header_row)
 
-            actin_fibers_filtered = [fiber for fiber in self.fibers_list if fiber.n >= fiber_min_layers_theshold]
+            actin_fibers_filtered = [fiber for fiber in self.fibers_list if fiber.length >= fiber_min_thr_microns]
 
             for fiber_id, fiber in enumerate(actin_fibers_filtered):
                 csv_writer.writerow([str(fiber_id)] + fiber.get_stat(resolution))
