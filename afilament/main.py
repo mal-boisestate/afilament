@@ -15,11 +15,11 @@ from afilament.objects import Utils
 def main():
 
     # Specify image numbers to be analyzed
-    img_nums = range(0, 21)
+    img_nums = range(0, 1)
 
     # Set RECALCULATE to True to re-run analysis on all images
     # Set RECALCULATE to False to load previously analyzed data
-    RECALCULATE = True
+    RECALCULATE = False
 
     # Start Java virtual machine for Bioformats library
     javabridge.start_vm(class_path=bioformats.JARS)
@@ -75,6 +75,9 @@ def main():
     # Extract statistical data
     # Extract all_cells from images data
     aggregated_stat_list = []
+
+
+
     for file in os.listdir(config.imgs_objects):
         #add check if directory is empty and ask user to specify where get data
         img_path = Path(os.path.join(config.imgs_objects, file))
@@ -87,6 +90,8 @@ def main():
             #So we do not save it in config and analyser respectfully
             analyser.img_resolution = cells_img.resolution
             analyser.fiber_min_thr_pixels = analyser.fiber_min_thr_microns / analyser.img_resolution.x
+
+
             # Save individual cell data to CSV file
             analyser.save_cells_data(cells_img.cells)
             aggregated_stat_list = analyser.add_aggregated_cells_stat(aggregated_stat_list, cells_img.cells,
@@ -94,7 +99,6 @@ def main():
 
     # Save aggregated cell statistics to CSV file
     analyser.save_aggregated_cells_stat_list(aggregated_stat_list)
-    # # Save current configuration settings to JSON file
     analyser.save_config(RECALCULATE, config.imgs_objects)
 
     end = time.time()

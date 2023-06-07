@@ -175,6 +175,7 @@ class SingleFiber(object):
             length = resolution.x
 
         else:
+            last_i = 0
             length = 0
             for i in range(0, self.n - k, k):
                 point_1 = np.array([self.xs[i] * resolution.x,
@@ -186,18 +187,19 @@ class SingleFiber(object):
 
                 distance = np.linalg.norm(point_2 - point_1)
                 length += distance
+                last_i = i + k
 
             #Calculate the rest
-            for i in range(self.n - k, self.n - 1):
-                point_1 = np.array([self.xs[i] * resolution.x,
-                                    self.ys[i] * resolution.y,
-                                    self.zs[i] * resolution.z])
-                point_2 = np.array([self.xs[i + 1] * resolution.x,
-                                    self.ys[i + 1] * resolution.y,
-                                    self.zs[i + 1] * resolution.z])
+            point_1 = np.array([self.xs[last_i] * resolution.x,
+                                self.ys[last_i] * resolution.y,
+                                self.zs[last_i] * resolution.z])
+            point_2 = np.array([self.xs[self.n - 1] * resolution.x,
+                                self.ys[self.n - 1] * resolution.y,
+                                self.zs[self.n - 1] * resolution.z])
 
-                distance = np.linalg.norm(point_2 - point_1)
-                length += distance
+            distance = np.linalg.norm(point_2 - point_1)
+            length += distance
+
 
 
         return length

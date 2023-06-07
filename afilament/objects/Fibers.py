@@ -503,3 +503,27 @@ class Fibers(object):
         self.is_merged = True
         self.fibers_list = merged_fibers
         self._update_merged_fibers_aggregated_stat(resolution)
+
+    def get_alternative_length_test_k(self, fiber_min_thr_microns, resolution, step):
+        """
+        Calculates the alternative actin length based on a specified step size.
+
+        Args:
+            fiber_min_thr_microns (int): The minimum threshold in microns for considering a fiber in the length calculation.
+            resolution (float): The resolution of the image data in microns/pixel.
+            step (int): The step size for measuring actin length.
+
+        Returns:
+            int: The total alternative actin length in microns.
+
+        Note:
+            This method provides an alternative approach to calculate actin length by considering a step size. It helps in reducing noise and improving accuracy compared to counting each individual layer.
+
+        """
+        total_alternative_length = 0
+        for fiber in self.fibers_list:
+            length = fiber.get_length_test_k(resolution, step)
+            if length >= fiber_min_thr_microns:
+                total_alternative_length += length
+
+        return total_alternative_length

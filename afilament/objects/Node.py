@@ -140,33 +140,32 @@ def plot_branching_nodes(actin_fibers, nodes, min_fiber_thr_microns, resolution,
             if xdata:
                 fig_ax.scatter3D(
                     xdata, ydata, zdata,
-                    c=[colors[i]], cmap='Greens', s=100*fiber_weight, alpha=0.2
+                    c=[colors[i]], cmap='Greens', s=20*fiber_weight, alpha=0.2
                 )
 
             # This code maps the correspondence between fiber color and fiber number
             # in the statistical file. It is currently commented out since the data is not necessary.
 
-            # # Add text label to plot
-            # # This part of code helps match fiber color and fiber statistics. Is optional.Comment out
+            # Add text label to plot
+            # This part of code helps match fiber color and fiber statistics. Is optional.Comment out
             # old_len = (fiber.xs[-1] - fiber.xs[0]) * resolution.x
             # old_xsection = np.mean([cv2.contourArea(cnt) for cnt in fiber.cnts]) * resolution.y * resolution.z
             # old_volume = old_len * old_xsection
-            #
+
             # len_each_1 = fiber.get_length_test_k(resolution, 1)
             # len_each_2 = fiber.get_length_test_k(resolution, 2)
             # len_each_3 = fiber.get_length_test_k(resolution, 3)
             # len_each_5 = fiber.get_length_test_k(resolution, 5)
-            #
-            #
-            # fig_ax.text2D(
-            #     -0.2, temp,
-            #     f"OLD: {old_len:.2f} \u03BCm \n"
-            #     f"1st: {len_each_1:.2f} \u03BCm | 2nd: {len_each_2:.2f} \u03BCm | 3rd: {len_each_3:.2f} \u03BCm | 5th: {len_each_5:.2f} \u03BCm\n"
-            #     f"    1st: {(len_each_1/old_len-1)*100:.0f}%    |     2nd: {(len_each_2/old_len-1)*100:.0f}%    |     3rd: {(len_each_3/old_len-1)*100:.0f}%    |     5th: {(len_each_5/old_len-1)*100:.0f}%",
-            #     size=12,
-            #     color=colors[i]
-            # )
-            # temp += 0.02
+
+
+            fig_ax.text2D(
+                -0.2, temp,
+                f"Len: {fiber.length:.2f} $\u03BCm$ | Volume: {fiber.volume:.2f} $\u03BCm^3$ | Cross.: {fiber.av_xsection:.2f} $\u03BCm^2$\n"
+                f"Start x:{fiber.xs[0]} y:{fiber.ys[0]}    |    End x:{fiber.xs[-1]} y:{fiber.ys[-1]}\n",
+                size=11,
+                color=colors[i]
+            )
+            temp += 0.015
 
 
 
@@ -189,7 +188,7 @@ def plot_branching_nodes(actin_fibers, nodes, min_fiber_thr_microns, resolution,
 
         # Plot branching nodes
         if xdata:
-            fig_ax.scatter3D(xdata, ydata, zdata, c=[color] * len(xdata), s=100, cmap='Greens', depthshade=False)
+            fig_ax.scatter3D(xdata, ydata, zdata, c=[color] * len(xdata), s=25, cmap='Greens', depthshade=False)
 
 
     actin_fibers_filtered = [fiber for fiber in actin_fibers.fibers_list if fiber.length >= min_fiber_thr_microns]

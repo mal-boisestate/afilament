@@ -100,6 +100,11 @@ def visualise_actin(afilament_folder_path, image_index, cell_index, min_fiber_th
         raise ValueError(f"Invalid cell index: {cell_index}. Must be less than: {len(cells_img.cells)}")
     cell = cells_img.cells[cell_index]
 
+    # This code block recalculates the length of the actin for the old format.
+    # As per our decision for the LIV paper, we are aligning it with the method used in the KASH paper.
+    # The formula used for calculating the old length is: old_len = (fiber.xs[-1] - fiber.xs[0]) * resolution.x
+    cell.update_actin_stat_old_format(cells_img.resolution)
+
 
     # Get fiber statistics so we can put it on a graph. Fiber object will be updated
     if structure == StructureOptions.CAP:
@@ -169,19 +174,21 @@ def visualise_nucleus(afilament_folder_path, image_index, cell_index):
                color='white',
                font_size=9)
     p.add_title(f"Nucleus of image # {image_index}, cell # {cell_index}", font_size=11)
+    final_mesh.save(f'mesh/img_{image_index}__cell_{cell_index}.stl')
 
     p.show()
 
 
 if __name__ == '__main__':
-    afilament_folder_path = r"D:\BioLab\scr_2.0\afilament\img_objects"
+    afilament_folder_path = r"D:/BioLab/Current_experiments/afilament/2023.02.14_DAPI_Alexa488_LIV_Experiment/Second_trial/Control_w20/Initial run/img_objects"
 
-    image_index = 1
-    cell_index = 1
-    min_fiber_thr_microns = 5
-    node_actin_len_th = 0
+    # afilament_folder_path = r"D:\BioLab\Current_experiments\afilament\2023.02.14_DAPI_Alexa488_LIV_Experiment\Second_trial\LIV_w20\Initial run\img_objects"
+    image_index = 9
+    cell_index = 3
+    min_fiber_thr_microns = 7
+    node_actin_len_th = 2
     show_branching_nodes = True
-    structure = StructureOptions.TOTAL
+    structure = StructureOptions.CAP
     vis_mode = VisualizationModes.ACTIN
 
     if vis_mode not in VisualizationModes.__dict__.values():

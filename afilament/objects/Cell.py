@@ -124,7 +124,7 @@ class Cell(object):
     def get_aggregated_cell_stat(self, is_separate_cap_bottom, fiber_min_thr_microns, resolution, node_actin_len_th):
         """
         [_, "Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre",
-        "Nucleus_width, micrometre", "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre",
+        "Nucleus_width, micrometre", "Nucleus_high, micrometre",
         "Nucleus_total_intensity", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num",
         "Total_fiber_volume, cubic_micrometre", "Cap_fiber_volume, cubic_micrometre",
         "Bottom_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",
@@ -145,7 +145,7 @@ class Cell(object):
             bottom_branching_nodes = [node for node in self.bottom_nodes if len(node.actin_ids) > 1]
 
             return [self.img_number, self.number, self.nucleus.nuc_volume, self.nucleus.nuc_length,
-                    self.nucleus.nuc_width, self.nucleus.nuc_high, self.nucleus.nuc_high_alternative,
+                    self.nucleus.nuc_width, self.nucleus.nuc_high_alternative,
                     self.nucleus.nuc_intensity,
                     self.actin_total.total_num, self.actin_cap.total_num, self.actin_bottom.total_num,
                     self.actin_total.total_volume, self.actin_cap.total_volume, self.actin_bottom.total_volume,
@@ -157,11 +157,31 @@ class Cell(object):
         else:
             self.actin_total.create_fibers_aggregated_stat(fiber_min_thr_microns, resolution)
             total_branching_nodes = [node for node in self.total_nodes if len(node.actin_ids) > 1]
+            actin_total_alternative_length = self.actin_total.get_alternative_length_test_k(fiber_min_thr_microns,
+                                                                                            resolution, step=5)
             return [self.img_number, self.number, self.nucleus.nuc_volume, self.nucleus.nuc_length,
-                    self.nucleus.nuc_width, self.nucleus.nuc_high, self.nucleus.nuc_high_alternative,
+                    self.nucleus.nuc_width, self.nucleus.nuc_high_alternative,
                     self.nucleus.nuc_intensity, self.actin_total.total_num, self.actin_total.total_volume,
                     self.actin_total.total_length,
                     self.actin_total.intensity, self.actin_total.f_actin_signal_total_intensity, len(total_branching_nodes)]
 
+    def update_actin_stat_old_format(self, resolution):
+        """
+        This function is a temporary solution to revert the calculation of action length to the old format, specifically
+        focusing on changes along the x-axis and disregarding changes across the y and z-axes. The decision to adopt
+        this method was made during a meeting with Dr. Uzer on 05/26/2023. The alternative methods of calculating length
+        have raised numerous questions, and we have chosen to allocate more time to investigate these concerns.
+        """
 
+        def update_fiber_length_and_av_xsection(fiber, resolution):
+            fiber.length = (fiber.xs[-1] - fiber.xs[0]) * resolution.x
+
+            if fiber.length == 0:
+                fiber.av_xsection = 0
+            else:
+                fiber.av_xsection = fiber.volume / fiber.length
+
+        for fiber_list in [self.actin_total.fibers_list, self.actin_cap.fibers_list, self.actin_bottom.fibers_list]:
+            for fiber in fiber_list:
+                update_fiber_length_and_av_xsection(fiber, resolution)
 

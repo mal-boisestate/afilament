@@ -224,6 +224,12 @@ class CellAnalyser(object):
         Save whole fiber statistics for each cell in separate file. Save actin object as well.
         """
         for cell in cells:
+            # This code block recalculates the length of the actin for the old format.
+            # As per our decision for the LIV paper, we are aligning it with the method used in the KASH paper.
+            # The formula used for calculating the old length is: old_len = (fiber.xs[-1] - fiber.xs[0]) * resolution.x
+            cell.update_actin_stat_old_format(self.img_resolution)
+
+
             # save actin fiber statistics
             actin_stat_total_file_path = os.path.join(self.output_data_folders["actin_stat"],
                                                       "img_num_" + str(cell.img_number) + "__cell_num_" + str(cell.number)
@@ -256,7 +262,6 @@ class CellAnalyser(object):
         - "Nucleus_length, micrometre",
         - "Nucleus_width, micrometre",
         - "Nucleus_high, micrometre"
-        - "Nucleus_high_alternative, micrometre"
         - "Nucleus_total_intensity"
         - "Total_fiber_num",
         - "Cap_fiber_num"
@@ -280,7 +285,7 @@ class CellAnalyser(object):
         if self.is_separate_cap_bottom:
             header_row = ["Image_name", "Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre",
                           "Nucleus_length, micrometre", "Nucleus_width, micrometre",
-                          "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre",
+                          "Nucleus_high, micrometre",
                           "Nucleus_total_intensity", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num",
                           "Total_fiber_volume, cubic_micrometre",
                           "Cap_fiber_volume, cubic_micrometre", "Bottom_fiber_volume, cubic_micrometre",
@@ -305,7 +310,7 @@ class CellAnalyser(object):
                     ))
         else:
             header_row = ["Image_name","Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre",
-                          "Nucleus_width, micrometre", "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre",
+                          "Nucleus_width, micrometre", "Nucleus_high, micrometre",
                           "Nucleus_total_intensity", "Total_fiber_num",
                           "Total_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",
                           "Fiber_intensity_whole", "F-actin_signal_intensity_whole", "Branching_nodes_total, #"]
@@ -334,7 +339,6 @@ class CellAnalyser(object):
         - "Nucleus_length, micrometre",
         - "Nucleus_width, micrometre",
         - "Nucleus_high, micrometre"
-        - "Nucleus_high_alternative, micrometre"
         - "Nucleus_total_intensity"
         - "Total_fiber_num",
         - "Cap_fiber_num"
@@ -375,7 +379,6 @@ class CellAnalyser(object):
         - "Nucleus_length, micrometre",
         - "Nucleus_width, micrometre",
         - "Nucleus_high, micrometre"
-        - "Nucleus_high_alternative, micrometre"
         - "Nucleus_total_intensity"
         - "Total_fiber_num",
         - "Cap_fiber_num"
@@ -399,12 +402,11 @@ class CellAnalyser(object):
         if self.is_separate_cap_bottom:
             header_row = ["Image_name", "Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre",
                           "Nucleus_length, micrometre", "Nucleus_width, micrometre",
-                          "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre",
+                          "Nucleus_high, micrometre",
                           "Nucleus_total_intensity", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num",
                           "Total_fiber_volume, cubic_micrometre",
                           "Cap_fiber_volume, cubic_micrometre", "Bottom_fiber_volume, cubic_micrometre",
-                          "Total_fiber_length, micrometre",
-                          "Cap_fiber_length, micrometre", "Bottom_fiber_length, micrometre",
+                          "Total_fiber_length, micrometre", "Cap_fiber_length, micrometre", "Bottom_fiber_length, micrometre",
                           "Fiber_intensity_whole",
                           "Fiber_intensity_cap", "Fiber_intensity_bottom",
                           "F-actin_signal_intensity_whole",
@@ -414,7 +416,7 @@ class CellAnalyser(object):
 
         else:
             header_row = ["Image_name","Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre",
-                          "Nucleus_width, micrometre", "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre",
+                          "Nucleus_width, micrometre", "Nucleus_high, micrometre",
                           "Nucleus_total_intensity", "Total_fiber_num",
                           "Total_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",
                           "Fiber_intensity_whole", "F-actin_signal_intensity_whole", "Branching_nodes_total, #"]
