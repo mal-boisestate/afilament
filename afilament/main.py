@@ -15,11 +15,11 @@ from afilament.objects import Utils
 def main():
 
     # Specify image numbers to be analyzed
-    img_nums = range(0, 1)
+    img_nums = range(0, 4)
 
     # Set RECALCULATE to True to re-run analysis on all images
     # Set RECALCULATE to False to load previously analyzed data
-    RECALCULATE = False
+    RECALCULATE = True
 
     # Start Java virtual machine for Bioformats library
     javabridge.start_vm(class_path=bioformats.JARS)
