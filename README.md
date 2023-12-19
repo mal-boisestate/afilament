@@ -143,6 +143,8 @@ If the user specifies is_separate_cap_bottom, the following additional data is i
 - F-actin signal intensity (basal)
 - Nodes basal, in number
 
+[![Results Verification Demo](docs/imgs/video.png)](https://www.youtube.com/watch?v=zzSIZ1AOHsE)
+
 ### TENSORBOARD
 You can visualize in real time the train and test losses, the weights and gradients, along with the model predictions with tensorboard:
 

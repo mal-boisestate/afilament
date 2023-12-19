@@ -238,12 +238,12 @@ def visualise_nucleus(afilament_folder_path, image_index, cell_index):
 
 if __name__ == '__main__':
     # afilament_folder_path = r"D:\BioLab\Current_experiments\afilament\2023.02.14_DAPI_Alexa488_LIV_Experiment\Second_trial\Control_w20\Initial run\img_objects"
-    # afilament_folder_path = r"D:\BioLab\Current_experiments\afilament\2023.05.04_Visualisation_test\img_objects_the_cell_W200_thr3\img_objects"
-    afilament_folder_path = r"D:\BioLab\Current_experiments\afilament\2023.12.04_Live_imaging\w20_cap_bottom_norm\img_objects"
-    image_index = 1
+    afilament_folder_path = r"D:\BioLab\Current_experiments\afilament\2023.05.04_Visualisation_test\img_objects_the_cell_W200_thr3\img_objects"
+    # afilament_folder_path = r"D:\BioLab\Current_experiments\afilament\2023.12.04_Live_imaging\w20_cap_bottom_norm\img_objects"
+    image_index = 0
     cell_index = 0
-    min_fiber_thr_microns = 1
-    node_actin_len_th = 2
+    min_fiber_thr_microns = 2
+    node_actin_len_th = 0
     show_branching_nodes = True
     structure = StructureOptions.TOTAL
     vis_mode = VisualizationModes.ACTIN

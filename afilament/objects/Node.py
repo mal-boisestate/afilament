@@ -6,6 +6,7 @@ from termcolor import colored, cprint
 
 from afilament.objects.SingleFiber import SingleFiber
 
+reference_xsection_um = 50
 
 class Node:
 
@@ -142,7 +143,7 @@ def plot_branching_nodes(actin_fibers, nodes, min_fiber_thr_microns, resolution,
 
         # Set up colors for each fiber
         colors = np.random.rand(len(actin_fibers_filtered), 3)
-        reference_xsection_um = 30
+
         fixed_size = 10
 
         # Plot each fiber
@@ -170,8 +171,8 @@ def plot_branching_nodes(actin_fibers, nodes, min_fiber_thr_microns, resolution,
             if xdata:
                 fig_ax.scatter3D(
                     xdata, ydata, zdata,
-                    c=[colors[i]], cmap='Greens', s=fixed_size, alpha=0.2
-                )  # alternatively s=20*fiber_weight
+                    c=[colors[i]], cmap='Greens', s=20*fiber_weight, alpha=0.2,
+                )  # alternatively s=20*fiber_weight or s=fixed_size
 
             # This code maps the correspondence between fiber color and fiber number
             # in the statistical file. It is currently commented out since the data is not necessary.
@@ -188,36 +189,37 @@ def plot_branching_nodes(actin_fibers, nodes, min_fiber_thr_microns, resolution,
             # len_each_5 = fiber.get_length_test_k(resolution, 5)
             actin_center_indx = find_closest_index(fiber.xs, nuc_center[0])
 
-        #     # Create and store the text element
-        #     text_element = fig_ax.text2D(
-        #         -0.2, temp,
-        #         f"Length: {fiber.length:.2f} μm | Volume: {fiber.volume:.2f} μm^3 | Cross-section.: {fiber.av_xsection:.2f} μm^2\n"
-        #         # f"Center* x:{fiber.xs[actin_center_indx]} y:{fiber.ys[actin_center_indx]}  z:{fiber.zs[actin_center_indx]} \n
-        #         f"Start x:{max_x - fiber.xs[0]} y:{fiber.ys[0]} z:{fiber.zs[0]} | End x:{max_x - fiber.xs[-1]} y:{fiber.ys[-1]} z:{fiber.zs[-1]}\n"
-        #         ,
-        #         size=9,
-        #         color=colors[i]
-        #     )
-        #     text_elements.append(text_element)
-        #     temp += 0.010
-        #
-        # def scroll_event_handler(event):
-        #     # Adjust y-coordinates of text elements based on scroll direction
-        #     for text in text_elements:
-        #         x, y = text.get_position()
-        #         y += event.step * 0.005  # Adjust this value to control scroll speed
-        #         text.set_position((x, y))
-        #
-        #     fig_ax.figure.canvas.draw_idle()
-        #
-        # # Connect the scroll event to the handler
-        # fig_ax.figure.canvas.mpl_connect('scroll_event', scroll_event_handler)
+            # Create and store the text element
+            text_element = fig_ax.text2D(
+                -0.2, temp,
+                f"Length: {fiber.length:.2f} μm | Volume: {fiber.volume:.2f} μm^3 | Cross-section.: {fiber.av_xsection:.2f} μm^2\n"
+                # f"Center* x:{fiber.xs[actin_center_indx]} y:{fiber.ys[actin_center_indx]}  z:{fiber.zs[actin_center_indx]} \n
+                # f"Start x:{max_x - fiber.xs[0]} y:{fiber.ys[0]} z:{fiber.zs[0]} | End x:{max_x - fiber.xs[-1]} y:{fiber.ys[-1]} z:{fiber.zs[-1]}\n"
+                ,
+                size=10,
+                color=colors[i]
+            )
+            text_elements.append(text_element)
+            temp += 0.010
+
+        def scroll_event_handler(event):
+            # Adjust y-coordinates of text elements based on scroll direction
+            for text in text_elements:
+                x, y = text.get_position()
+                y += event.step * 0.005  # Adjust this value to control scroll speed
+                text.set_position((x, y))
+
+            fig_ax.figure.canvas.draw_idle()
+
+        # Connect the scroll event to the handler
+        fig_ax.figure.canvas.mpl_connect('scroll_event', scroll_event_handler)
 
     def plot_green_actin_fibers(fig_ax):
         """
         Plot actin fibers in 3D space with a uniform bright green color and size.
         """
         bright_green_color = [0, 1, 0]  # RGB for bright green
+        bright_red_color = [1, 0.3, 0]  # RGB for bright green
         fixed_size = 10  # Fixed size for all fibers
         all_xs = [x for fiber in actin_fibers_filtered for x in fiber.xs if len(fiber.xs) > 0]
         max_x = max(all_xs)
@@ -232,12 +234,14 @@ def plot_branching_nodes(actin_fibers, nodes, min_fiber_thr_microns, resolution,
             xdata = [max_x - x for x in fiber.xs]  # Flip x-coordinates
             ydata = fiber.ys  # Flip y-coordinates
             zdata = fiber.zs
+            fiber_weight = np.mean([cv2.contourArea(cnt) for cnt in fiber.cnts]) / reference_xsection_um
+
 
             if xdata:
                 fig_ax.scatter3D(
                     xdata, ydata, zdata,
-                    color=bright_green_color, s=fixed_size, alpha=0.6
-                )
+                    color=bright_green_color, s=20*fiber_weight, alpha=0.6
+                ) #s=fixed_size or s=20*fiber_weight
 
     def plot_branching_nodes(fig_ax):
         """
@@ -274,30 +278,30 @@ def plot_branching_nodes(actin_fibers, nodes, min_fiber_thr_microns, resolution,
     fig.patch.set_alpha(0.0)  # Set the transparency for the figure's background
     fig_ax = fig.add_subplot(111, projection='3d')
     fig_ax.patch.set_alpha(0.0)  # Set the transparency for the axes' background
-    #
-    # # Remove the gridlines and ticks
-    # fig_ax.grid(False)  # Turn off the gridlines
-    # fig_ax.xaxis._axinfo["grid"]['color'] = (1, 1, 1, 0)
-    # fig_ax.yaxis._axinfo["grid"]['color'] = (1, 1, 1, 0)
-    # fig_ax.zaxis._axinfo["grid"]['color'] = (1, 1, 1, 0)
-    #
-    # # Turn off the pane color to make it transparent as well
-    # fig_ax.xaxis.pane.fill = False
-    # fig_ax.yaxis.pane.fill = False
-    # fig_ax.zaxis.pane.fill = False
-    #
-    # # Optionally, you can also make the axis pane color transparent
-    # fig_ax.xaxis.pane.set_edgecolor('w')
-    # fig_ax.yaxis.pane.set_edgecolor('w')
-    # fig_ax.zaxis.pane.set_edgecolor('w')
-    #
-    # # Remove axis lines and ticks
-    # fig_ax.xaxis.line.set_visible(False)
-    # fig_ax.yaxis.line.set_visible(False)
-    # fig_ax.zaxis.line.set_visible(False)
-    # fig_ax.set_xticks([])
-    # fig_ax.set_yticks([])
-    # fig_ax.set_zticks([])
+
+    # Remove the gridlines and ticks
+    fig_ax.grid(False)  # Turn off the gridlines
+    fig_ax.xaxis._axinfo["grid"]['color'] = (1, 1, 1, 0)
+    fig_ax.yaxis._axinfo["grid"]['color'] = (1, 1, 1, 0)
+    fig_ax.zaxis._axinfo["grid"]['color'] = (1, 1, 1, 0)
+
+    # Turn off the pane color to make it transparent as well
+    fig_ax.xaxis.pane.fill = False
+    fig_ax.yaxis.pane.fill = False
+    fig_ax.zaxis.pane.fill = False
+
+    # Optionally, you can also make the axis pane color transparent
+    fig_ax.xaxis.pane.set_edgecolor('w')
+    fig_ax.yaxis.pane.set_edgecolor('w')
+    fig_ax.zaxis.pane.set_edgecolor('w')
+
+    # Remove axis lines and ticks
+    fig_ax.xaxis.line.set_visible(False)
+    fig_ax.yaxis.line.set_visible(False)
+    fig_ax.zaxis.line.set_visible(False)
+    fig_ax.set_xticks([])
+    fig_ax.set_yticks([])
+    fig_ax.set_zticks([])
 
     #####################################################################
 
@@ -306,8 +310,9 @@ def plot_branching_nodes(actin_fibers, nodes, min_fiber_thr_microns, resolution,
     # fig_ax = fig.add_subplot(111, projection='3d')
 
     # Plot actin fibers and branching nodes
-    # plot_actin_fibers(fig_ax)
-    plot_green_actin_fibers(fig_ax) #Modified function for Madisons's figures
+    # plot_green_actin_fibers(fig_ax) #Modified function for Madisons's figures
+    plot_actin_fibers(fig_ax)
+
     # plot_branching_nodes(fig_ax)
 
     # Add annotations
