@@ -15,7 +15,7 @@ from afilament.objects import Utils
 def main():
 
     # Specify image numbers to be analyzed
-    img_nums = range(0, 4)
+    img_nums = range(0, 57)
 
     # Set RECALCULATE to True to re-run analysis on all images
     # Set RECALCULATE to False to load previously analyzed data

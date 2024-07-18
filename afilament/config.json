@@ -1,15 +1,15 @@
 {
-  "confocal_img": "D:/BioLab/img/Confocal_img_actin/initial_image",
+  "confocal_img": "Z:/Common/BMMB/LSM900 files/Uzer Lab/NN/2024.07.09_Actin_Tubulin_3D_auto/CNT/LSM",
   "output_analysis_path": "../afilament/analysis_data",
   "output_verification_path": "../afilament/verification_data",
   "imgs_objects": "../afilament/img_objects",
-  "nucleus_channel": 1,
-  "actin_channel": 0,
+  "nucleus_channel": 2,
+  "actin_channel": 1,
 
   "actin_unet_model": "../unet/models/actin_models_test_file/3_training_set_img_CP_epoch200_W20.pth",
   "nucleus_unet_model": "../unet/models/CP_epoch200_nucleus_zeiss_plus_6cells_weight_correction_20.pth",
-  "from_top_nucleus_unet_model": "../unet/models/top_nuc_models/CP_epoch200_max_pr_23zeiss_10leica_multiple_cells_no_val.pth",
-  "unet_model_scale":1,
+  "from_top_nucleus_unet_model": "../unet/models/top_nuc_models/CP_epoch200_max_pr_134cells_114train_20test_zeiss_lieca.pth",
+  "unet_model_scale": 1,
   "unet_model_thrh": 0.5,
 
   "is_plot_fibers": false,
@@ -19,10 +19,11 @@
   "is_separate_cap_bottom": true,
   "cap_bottom_ratio": 0.4,
 
-  "norm_th": 10000,
-  "find_biggest_mode": "trh",
-  "nuc_theshold": 3,
-  "nuc_area_min_pixels_num": 30000,
+  "norm_th_nuc": 20000,
+  "norm_th_actin": 25000,
+  "find_biggest_mode": "unet",
+  "nuc_theshold": 50,
+  "nuc_area_min_pixels_num": 10000,
 
   "fiber_joint_angle": 10,
   "fiber_joint_distance": 50,

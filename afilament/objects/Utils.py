@@ -26,8 +26,10 @@ def find_max_projection(input_folder, identifier, norm_th, show_img=False):
     object_layers = []
     for img_path in glob.glob(os.path.join(input_folder, "*_" + identifier + "_*.png")):
         layer = int(img_path.rsplit(".", 1)[0].rsplit("_", 1)[1])
-        object_img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-        object_layers.append([object_img, layer])
+        object_img = cv2.imread(img_path, cv2.IMREAD_ANYDEPTH)
+        object_img = np.clip(object_img, 0, norm_th)
+        object_img_8bit = np.uint8(object_img / norm_th * 255)
+        object_layers.append([object_img_8bit, layer])
 
     object_layers = sorted(object_layers, key=lambda x: x[1], reverse=True)
     image_3d = np.asarray([img for img, layer in object_layers], dtype=np.uint8)
@@ -39,7 +41,7 @@ def find_max_projection(input_folder, identifier, norm_th, show_img=False):
     return max_projection_origin_size, max_progection_unet_size
 
 
-def find_rotation_angle(input_folder, norm_th, rotation_trh=50):
+def find_rotation_angle(input_folder, norm_th_actin, rotation_trh=50):
     """
     Find rotation angle based on Hough lines of edges of maximum actin projection.
     ---
@@ -53,7 +55,7 @@ def find_rotation_angle(input_folder, norm_th, rotation_trh=50):
         - hough_lines_img (img): image for verification
     """
     identifier = "actin"
-    max_projection, max_progection_img = find_max_projection(input_folder, identifier, norm_th)
+    max_projection, max_progection_img = find_max_projection(input_folder, identifier, norm_th_actin)
 
     # Find the edges in the image using canny detector
     edges = cv2.Canny(max_projection, rotation_trh, 100)
@@ -134,8 +136,6 @@ def rotate_and_get_3D(input_folder, identifier, rot_angle):
         object_img = cv2.imread(img_path, cv2.IMREAD_ANYDEPTH)
         object_img = rotate_bound(object_img, rot_angle)
         object_layers.append([object_img, layer])
-        # cv2.imshow("output", cv2.resize(object_img, (1000, 1000))) #keep for debugging purposes
-        # cv2.waitKey()
     object_layers = sorted(object_layers, key=lambda x: x[1], reverse=True)
     image_3d = np.asarray([img for img, layer in object_layers])
     max_progection = image_3d[:, :, :].max(axis=0, out=None, keepdims=False, where=True)
@@ -418,12 +418,14 @@ def rotate_point(rotated_point, main_point, rot_angle):
 
 
 def get_nuclei_masks(temp_folders, analysis_folder, image_path, nuc_theshold,
-                     nuc_area_min_pixels_num, find_biggest_mode, img_num, norm_th, unet_parm=None):
+                     nuc_area_min_pixels_num, find_biggest_mode, img_num, norm_th_nuc, unet_parm=None):
     img_base_path = os.path.splitext(os.path.basename(image_path))[0]
     max_projection_origin_size, max_progection_unet_size = find_max_projection(temp_folders["raw"], "nucleus",
-                                                                               norm_th, show_img=False)
+                                                                               norm_th_nuc, show_img=False)
     max_projection_path = os.path.join(temp_folders["nucleus_top_img"], img_base_path + ".png")
+
     cv2.imwrite(max_projection_path, max_projection_origin_size)
+
     dim = 0
     cnts = []
     if find_biggest_mode == "unet":

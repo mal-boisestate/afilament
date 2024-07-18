@@ -40,7 +40,8 @@ class CellAnalyser(object):
         self.node_actin_len_th = config.node_actin_len_th
         self.is_plot_fibers = config.is_plot_fibers
         self.is_plot_nodes = config.is_plot_nodes
-        self.norm_th = config.norm_th
+        self.norm_th_nuc = config.norm_th_nuc
+        self.norm_th_actin = config.norm_th_actin
         self.find_biggest_mode = config.find_biggest_mode #"unet" for U-Net mode or "trh" for trh mode
         self.img_resolution = None
         self.is_separate_cap_bottom = config.is_separate_cap_bottom
@@ -96,11 +97,12 @@ class CellAnalyser(object):
         for folder in temp_folders.values():
             Utils.prepare_folder(folder)
 
-        reader = ConfocalImgReader(self.confocal_path, self.nucleus_channel, self.actin_channel, img_num, self.norm_th)
+        reader = ConfocalImgReader(self.confocal_path, self.nucleus_channel, self.actin_channel, img_num)
         reader.read(temp_folders["raw"], "whole")
         Utils.get_nuclei_masks(temp_folders, self.output_data_folders,
                                reader.image_path, self.nuc_theshold, self.nuc_area_min_pixels_num,
-                               self.find_biggest_mode, img_num, self.unet_parm)
+                               self.find_biggest_mode, img_num, self.norm_th_nuc, self.unet_parm)
+
 
     def analyze_img(self, img_num):
         """
@@ -116,12 +118,12 @@ class CellAnalyser(object):
 
         # Step 1: Read confocal microscope image, save images in png 8 bit. Since there are
         # computational power limitations our Unet works only with 8-bit images.
-        reader = ConfocalImgReader(self.confocal_path, self.nucleus_channel, self.actin_channel, img_num, self.norm_th)
+        reader = ConfocalImgReader(self.confocal_path, self.nucleus_channel, self.actin_channel, img_num)
         self.img_resolution = reader.img_resolution
         reader.read(temp_folders["raw"], "whole")
         nuclei_masks = Utils.get_nuclei_masks(temp_folders, self.output_data_folders,
                                               reader.image_path, self.nuc_theshold, self.nuc_area_min_pixels_num,
-                                              self.find_biggest_mode, img_num, self.norm_th, self.unet_parm)
+                                              self.find_biggest_mode, img_num, self.norm_th_nuc, self.unet_parm)
 
         cells = []
         for i, nuc_mask in enumerate(nuclei_masks):
@@ -170,7 +172,6 @@ class CellAnalyser(object):
         print(f"\n Analyse {part} fibers of the cell # {cell.number}")
         # Step 1: Read confocal microscope image, save images in png 8 bit. Since there are
         # computational power limitations our Unet works only with 8-bit images.
-        # reader = ConfocalImgReader(self.confocal_path, self.nucleus_channel, self.actin_channel, cell.number, self.norm_th)
         self.img_resolution = reader.img_resolution
         reader.read(temp_folders["raw"], part)
 
@@ -185,7 +186,7 @@ class CellAnalyser(object):
         # for further visual verification.
         # Finding the rotation angle for "whole" cell based on all layers, for "cap" on upper half, for "bottom" on lower "half"
         # Rotate mask, so area of interest can be catted again after rotation all layers.
-        rot_angle, max_progection_img, hough_lines_img = Utils.find_rotation_angle(temp_folders["cut_out_nuc"], self.norm_th)
+        rot_angle, max_progection_img, hough_lines_img = Utils.find_rotation_angle(temp_folders["cut_out_nuc"], self.norm_th_actin)
         rotated_mask = Utils.rotate_bound(nucleus_mask, rot_angle)
         rotated_cnt = Contour.get_mask_cnt(rotated_mask)
         rotated_cnt_extremes = Contour.get_cnt_extremes(rotated_cnt)
@@ -194,7 +195,7 @@ class CellAnalyser(object):
         # For "cap" and "bottom" we need only fibers.
         if part == "whole":
             cell.analyze_nucleus(rot_angle, rotated_cnt_extremes, temp_folders, self.unet_parm, self.img_resolution,
-                                 self.output_data_folders["analysis"], self.norm_th)
+                                 self.output_data_folders["analysis"], self.norm_th_nuc)
 
         # Step 5:  Reconstruct the specified area (whole/cap/bottom) of actin fibers:
         #  a. For "cap" and "bottom": rotate the whole nucleus again.
@@ -213,7 +214,7 @@ class CellAnalyser(object):
                                                                         self.img_resolution, self.is_plot_fibers,
                                                                         self.is_connect_fibers, self.fiber_joint_angle,
                                                                         self.fiber_joint_distance, self.cap_bottom_ratio,
-                                                                        self.norm_th)
+                                                                        self.norm_th_actin)
         Utils.save_rotation_verification(cell, max_progection_img, hough_lines_img, rotated_max_projection, mid_cut_img,
                                          part, self.output_data_folders, self.unet_parm)
         reader.close()

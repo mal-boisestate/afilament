@@ -25,7 +25,8 @@ class Cell(object):
         self.actin_bottom_join = None
 
 
-    def analyze_nucleus(self, rot_angle, rotated_cnt_extremes, folders, unet_parm, img_resolution, analysis_folder, norm_th):
+    def analyze_nucleus(self, rot_angle, rotated_cnt_extremes, folders, unet_parm, img_resolution,
+                        analysis_folder, norm_th_nuc):
         """
         Run nucleus analysis of the cell
         ---
@@ -37,13 +38,14 @@ class Cell(object):
         img_resolution (ImgResolution object):
         """
         nucleus = Nucleus()
-        nucleus.reconstruct(rot_angle, rotated_cnt_extremes, folders, unet_parm, img_resolution, analysis_folder, norm_th)
+        nucleus.reconstruct(rot_angle, rotated_cnt_extremes, folders, unet_parm, img_resolution,
+                            analysis_folder, norm_th_nuc)
         self.nucleus = nucleus
 
 
     def analyze_actin_fibers(self, rot_angle, rotated_cnt_extremes, folders, unet_parm, part,
                              fiber_min_thr_microns, resolution, is_plot_fibers, is_connect_fibers,
-                             fiber_joint_angle, fiber_joint_distance, cap_bottom_ratio, norm_th):
+                             fiber_joint_angle, fiber_joint_distance, cap_bottom_ratio, norm_th_actin):
         """
         Run fibers analysis based on part and save results in cell (self) object
         ---
@@ -63,7 +65,7 @@ class Cell(object):
 
         rotated_max_projection, mid_cut_img = fibers.reconstruct(rot_angle, rotated_cnt_extremes, folders,
                                                                  unet_parm, part, resolution, cap_bottom_cut_off_z,
-                                                                 norm_th)
+                                                                 norm_th_actin)
         if is_connect_fibers:
             fiber_joint_angle_z = math.degrees(math.atan(self.nucleus.nuc_length/(self.nucleus.nuc_high/2))) #Fiber join angle for z axis is calculated based on nucleus height and length so the algorithm considers curve surface of nucleus
             nodes, pairs = fibers.find_connections(fiber_joint_angle, fiber_joint_angle_z, fiber_joint_distance, resolution)
@@ -181,7 +183,9 @@ class Cell(object):
             else:
                 fiber.av_xsection = fiber.volume / fiber.length
 
-        for fiber_list in [self.actin_total.fibers_list, self.actin_cap.fibers_list, self.actin_bottom.fibers_list]:
-            for fiber in fiber_list:
-                update_fiber_length_and_av_xsection(fiber, resolution)
+        for fiber_list in [getattr(self.actin_total, 'fibers_list', None), getattr(self.actin_cap, 'fibers_list', None), getattr(self.actin_bottom, 'fibers_list', None)]:
+            if fiber_list is not None:
+                for fiber in fiber_list:
+                    update_fiber_length_and_av_xsection(fiber, resolution)
+
 

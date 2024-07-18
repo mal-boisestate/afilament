@@ -15,7 +15,7 @@ class ConfocalImgReader(object):
     Creates an object that reads confocal microscopy images of two channels (actin and nucleus)
     """
 
-    def __init__(self, path, nucleus_channel, actin_channel, cell_number, norm_th):
+    def __init__(self, path, nucleus_channel, actin_channel, cell_number):
         """
             Parameters:
             img_path (string): path to the file to read
@@ -25,7 +25,6 @@ class ConfocalImgReader(object):
         self.image_path, self.series = self.get_img_path_and_series(path, cell_number)
         self.actin_channel = actin_channel
         self.nuc_channel = nucleus_channel
-        self.norm_th = norm_th
         metadata = bioformats.get_omexml_metadata(str(self.image_path))
         self.metadata_obj = bioformats.OMEXML(metadata)
         self.update_channels()

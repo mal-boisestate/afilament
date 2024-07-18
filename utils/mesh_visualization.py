@@ -147,8 +147,9 @@ if __name__ == '__main__':
     scale_y = 0.048
     scale_z = 0.210
     resolution = ImgResolution(scale_x, scale_y, scale_z)
-    file_path=r"D:\BioLab\Current_experiments\afilament\2023.02.14_DAPI_Alexa488_LIV_Experiment\5_models_analysis_outcome_for_2imgs\1_training_set_img_CP_epoch200_W20\test_cells_bach.pickle"
+    # file_path=r"D:\BioLab\Current_experiments\afilament\2023.02.14_DAPI_Alexa488_LIV_Experiment\5_models_analysis_outcome_for_2imgs\1_training_set_img_CP_epoch200_W20\test_cells_bach.pickle"
     # file_path = r"D:\BioLab\Current_experiments\afilament\2022.08.09_very_first_cell_analysis_data\analysis_data\test_cells_bach.pickle"
+    file_path = r"D:\BioLab\scr_2.0\afilament\img_objects"
     cells = pickle.load(open(file_path, "rb"))
     #cell = cells[0]
 

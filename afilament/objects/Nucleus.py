@@ -25,7 +25,7 @@ class Nucleus(object):
         self.nuc_intensity = None
 
 
-    def reconstruct(self, rot_angle, cnt_extremes, temp_folders, unet_parm, resolution, analysis_folder, norm_th):
+    def reconstruct(self, rot_angle, cnt_extremes, temp_folders, unet_parm, resolution, analysis_folder, norm_th_nuc):
         """
         Reconstruct nucleus and saves all stat info into this Nicleus objects
         ---
@@ -42,7 +42,7 @@ class Nucleus(object):
                              f"include preprocessed images is empty")
         nucleus_3d_img, _ = Utils.rotate_and_get_3D(temp_folders["cut_out_nuc"], 'nucleus', rot_angle)
         Utils.get_yz_xsection(nucleus_3d_img, temp_folders["nucleous_xsection"], 'nucleus', cnt_extremes)
-        Utils.save_as_8bit(temp_folders["nucleous_xsection"], temp_folders["nucleous_xsection_unet"], norm_th)
+        Utils.save_as_8bit(temp_folders["nucleous_xsection"], temp_folders["nucleous_xsection_unet"], norm_th_nuc)
         run_predict_unet(temp_folders["nucleous_xsection_unet"], temp_folders["nucleus_mask"], unet_parm.nucleus_unet_model,
                          unet_parm.unet_model_scale,
                          unet_parm.unet_model_thrh)
