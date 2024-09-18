@@ -16,7 +16,7 @@ def main():
     with open("../afilament/config.json", "r") as f:
         config = json.load(f, object_hook=lambda d: SimpleNamespace(**d))
 
-    img_nums = range(24)
+    img_nums = range(32)
 
     javabridge.start_vm(class_path=bioformats.JARS)
     analyser = CellAnalyser(config)
@@ -28,8 +28,8 @@ def main():
     for img_num in img_nums:
         # analyser.save_nuc_verification(img_num)
         # To be able visually to verify intermediate steps the program keeps transitional images and all statistic data in the temp folder.
-        raw_img_dir = r'C:\Users\nnina\Desktop\temp'
-        output_dir = r'C:\Users\nnina\Desktop\img2'
+        raw_img_dir = r'C:\Users\nnina\Desktop\1'
+        output_dir = r'C:\Users\nnina\Desktop\2'
         Utils.prepare_folder(raw_img_dir)
 
         reader = ConfocalImgReader(config.confocal_img, config.nucleus_channel, config.actin_channel, img_num)

@@ -7,6 +7,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from unet.predict import run_predict_unet, run_predict_unet_one_img
 
+class FittedOval:
+    def __init__(self, contour):
+        self.contour = contour
+        self.fit_oval()
+
+    def fit_oval(self):
+        self.ellipse = cv2.fitEllipse(self.contour)
+        self.center = self.ellipse[0]
+        self.major_axis = max(int(self.ellipse[1][0]), int(self.ellipse[1][1]))
+        self.minor_axis = min(int(self.ellipse[1][0]), int(self.ellipse[1][1]))
+
 
 def prepare_folder(folder):
     """
@@ -452,6 +463,7 @@ def get_nuclei_masks(temp_folders, analysis_folder, image_path, nuc_theshold,
 
     nuclei_masks = []
 
+
     for i, cnt in enumerate(cnts):
         one_nuc_mask = np.zeros(dim, dtype="uint8")
         cv2.drawContours(one_nuc_mask, [cnt], -1, color=(255, 255, 255), thickness=cv2.FILLED)
@@ -470,12 +482,20 @@ def draw_and_save_cnts_verification(analysis_folder, image_path, cnts, max_proge
                                 base_img_name + "_img-num_" + str(img_num) + "_max_projection.png")
 
     cv2.drawContours(max_progection_img, cnts, -1, (255, 255, 255), 5)
+    # Convert grayscale image to 3-channel (BGR) image
+    max_progection_img_color = cv2.cvtColor(max_progection_img, cv2.COLOR_GRAY2BGR)
+
 
     for i, cnt in enumerate(cnts):
+        fitted_oval = FittedOval(cnt)
         org = Contour.get_cnt_center(cnt)
-        cv2.putText(max_progection_img, str(i), org, fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=3, color=(255, 255, 0),
+        # Draw the fitted ellipse in yellow
+        cv2.ellipse(max_progection_img_color, fitted_oval.ellipse, (0, 255, 255), thickness=3)
+
+        cv2.putText(max_progection_img_color, str(f"{i} L:{fitted_oval.major_axis}px W:{fitted_oval.minor_axis}px"),
+                    org, fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=3, color=(255, 255, 0),
                     thickness=3)
-    cv2.imwrite(ver_img_path, max_progection_img)
+    cv2.imwrite(ver_img_path, max_progection_img_color)
 
 
 def remove_edge_nuc(cnts, img_dim):  # removes cells that touch the edges of the frame

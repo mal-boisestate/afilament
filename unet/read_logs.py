@@ -13,7 +13,7 @@ def extract_scalar_data(log_file):
     return data
 
 # Specify your log directory
-log_dir = r'D:\BioLab\scr_2.0\unet\runs\Mar21_15-41-59_LAPTOP-ISSFJ09KLR_0.001_BS_1_SCALE_1.0'
+log_dir = r'D:\BioLab\scr_2.0\unet\runs\Aug24_14-09-54_LAPTOP-ISSFJ09KLR_0.001_BS_1_SCALE_1.0'
 
 # Initialize data structures
 training_loss = []

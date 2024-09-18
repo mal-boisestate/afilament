@@ -6,10 +6,10 @@ import statistics
 from collections import defaultdict
 from afilament.objects import Utils
 from unet.predict import run_predict_unet
-from afilament.objects import Contour
-from afilament.objects.SingleFiber import SingleFiber
-from afilament.objects.Node import Node, add_edge_nodes
-from afilament.objects.MergedFiber import MergedFiber
+from objects import Contour
+from objects.SingleFiber import SingleFiber
+from objects.Node import Node, add_edge_nodes
+from objects.MergedFiber import MergedFiber
 
 
 class ActinContour(object):

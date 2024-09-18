@@ -1,7 +1,7 @@
-from afilament.objects.Nucleus import Nucleus
-from afilament.objects.Fibers import Fibers
-from afilament.objects import Node
-from afilament.objects.Parameters import TestStructure
+from objects.Nucleus import Nucleus
+from objects.Fibers import Fibers
+from objects import Node
+from objects.Parameters import TestStructure
 import pickle
 import math
 
@@ -26,7 +26,7 @@ class Cell(object):
 
 
     def analyze_nucleus(self, rot_angle, rotated_cnt_extremes, folders, unet_parm, img_resolution,
-                        analysis_folder, norm_th_nuc):
+                        analysis_folder, norm_th_nuc, nucleus_max_projection_mask):
         """
         Run nucleus analysis of the cell
         ---
@@ -39,7 +39,7 @@ class Cell(object):
         """
         nucleus = Nucleus()
         nucleus.reconstruct(rot_angle, rotated_cnt_extremes, folders, unet_parm, img_resolution,
-                            analysis_folder, norm_th_nuc)
+                            analysis_folder, norm_th_nuc, nucleus_max_projection_mask)
         self.nucleus = nucleus
 
 

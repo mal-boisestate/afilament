@@ -7,7 +7,7 @@ from pathlib import Path
 import math
 import bioformats
 
-from afilament.objects.Parameters import ImgResolution
+from objects.Parameters import ImgResolution
 
 
 class ConfocalImgReader(object):

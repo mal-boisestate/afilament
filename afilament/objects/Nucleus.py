@@ -3,8 +3,8 @@ import cv2.cv2 as cv2
 import numpy as np
 import math
 
-from afilament.objects import Utils
-from afilament.objects import Contour
+from objects import Utils
+from objects import Contour
 from unet.predict import run_predict_unet
 
 
@@ -25,7 +25,7 @@ class Nucleus(object):
         self.nuc_intensity = None
 
 
-    def reconstruct(self, rot_angle, cnt_extremes, temp_folders, unet_parm, resolution, analysis_folder, norm_th_nuc):
+    def reconstruct(self, rot_angle, cnt_extremes, temp_folders, unet_parm, resolution, analysis_folder, norm_th_nuc, nucleus_max_projection_mask):
         """
         Reconstruct nucleus and saves all stat info into this Nicleus objects
         ---
@@ -49,8 +49,28 @@ class Nucleus(object):
         self.nucleus_3d_img = Utils.get_3d_img(temp_folders["nucleous_xsection"])
         self.nuc_3D_mask = Utils.get_3d_img(temp_folders["nucleus_mask"])
         self.nucleus_reco_3d(resolution, analysis_folder)
-        self.nuc_length = (cnt_extremes.right[0] - cnt_extremes.left[0]) * resolution.x
-        self.nuc_width = (cnt_extremes.bottom[1] - cnt_extremes.top[1]) * resolution.y
+
+        ##############Elipce Experimetn######################
+        # Find contours in the mask
+        # Find contours in the mask
+        contours, _ = cv2.findContours(nucleus_max_projection_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contour = contours[0]
+
+        # Create a blank image to draw the results
+        result_img = np.zeros_like(nucleus_max_projection_mask)
+
+        # Create FittedOval object
+        self.fitted_oval = Utils.FittedOval(contour)
+
+        self.nuc_length = self.fitted_oval.major_axis * resolution.x
+        self.nuc_width = self.fitted_oval.minor_axis * resolution.y
+
+        #
+        #
+        # self.nuc_length = (cnt_extremes.right[0] - cnt_extremes.left[0]) * resolution.x
+        # self.nuc_width = (cnt_extremes.bottom[1] - cnt_extremes.top[1]) * resolution.y
+
+
         point_cloud = np.array(self.point_cloud)
         self.nuc_high_alternative = (max(point_cloud[:, 2]) - min(point_cloud[:, 2])) * resolution.z
         self.nuc_high = 2 * self.nuc_volume * 3/4 / (math.pi * self.nuc_length/2 * self.nuc_width/2)

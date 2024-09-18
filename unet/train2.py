@@ -21,7 +21,7 @@ dir_img = 'data/imgs/'
 dir_mask = 'data/masks/'
 dir_checkpoint = 'checkpoints/'
 
-def train_net(net, device, epochs=200, batch_size=1, lr=0.001, val_percent=0.15, save_cp=True, img_scale=1):
+def train_net(net, device, epochs=200, batch_size=1, lr=0.001, val_percent=0.05, save_cp=True, img_scale=1):
     transform_train = None
     dataset = BasicDataset(dir_img, dir_mask, transform=transform_train, scale=img_scale)
     n_val = int(len(dataset) * val_percent)
@@ -146,7 +146,7 @@ def get_args():
     parser.add_argument('-l', '--learning-rate', metavar='LR', type=float, nargs='?', default=0.001, help='Learning rate', dest='lr')
     parser.add_argument('-f', '--load', dest='load', type=str, default=False, help='Load model from a .pth file')
     parser.add_argument('-s', '--scale', dest='scale', type=float, default=1.0, help='Downscaling factor of the images')
-    parser.add_argument('-v', '--validation', dest='val', type=float, default=15, help='Percent of the data that is used as validation (0-100)')
+    parser.add_argument('-v', '--validation', dest='val', type=float, default=5, help='Percent of the data that is used as validation (0-100)')
 
     return parser.parse_args()
 

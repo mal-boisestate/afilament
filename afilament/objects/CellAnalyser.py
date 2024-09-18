@@ -6,26 +6,11 @@ import logging
 from pathlib import Path
 from datetime import datetime
 
-from afilament.objects import Utils
-from afilament.objects.ConfocalImgReader import ConfocalImgReader
-from afilament.objects import Contour
-from afilament.objects.Cell import Cell
-from afilament.objects.Parameters import UnetParam
-
-temp_folders = {
-    "raw": '../afilament/temp/czi_layers',
-    "cut_out_nuc": '../afilament/temp/actin_and_nucleus_layers',
-    "actin_xsection": '../afilament/temp/actin_layers',
-    "actin_xsection_unet": '../afilament/temp/actin_layers_unet',
-    "nucleous_xsection": '../afilament/temp/nucleus_layers',
-    "nucleous_xsection_unet": '../afilament/temp/nucleus_layers_unet',
-    "actin_mask": '../afilament/temp/actin_mask',
-    "nucleus_mask": '../afilament/temp/nucleus_mask',
-    "nucleus_top_mask": '../afilament/temp/nucleus_top_mask',
-    "nucleus_top_img": '../afilament/temp/nucleus_top_img',
-    "nuclei_top_masks": '../afilament/temp/nuclei_top_masks',
-}
-
+from objects import Utils
+from objects.ConfocalImgReader import ConfocalImgReader
+from objects import Contour
+from objects.Cell import Cell
+from objects.Parameters import UnetParam
 
 
 class CellAnalyser(object):
@@ -53,21 +38,46 @@ class CellAnalyser(object):
         self.is_auto_normalize = config.is_auto_normalized
         self.total_img_number = 0
         self.total_cells_number = 0
-        self.output_data_folders = self.get_analysis_data_folders(config.output_analysis_path,
-                                                                  config.output_verification_path)
 
+        confocal_dir_name = Path(self.confocal_path).stem
+        self.output_data_folder = config.output_analysis_path + f"/{confocal_dir_name}"
+
+        self.output_data_folders = self.get_analysis_data_folders(config.output_analysis_path,
+                                                                  config.output_verification_path, confocal_dir_name)
+
+
+
+        self.temp_folders = {
+            "raw": f'../afilament/temp/{confocal_dir_name}/czi_layers',
+            "nuc_raw": f'../afilament/temp/{confocal_dir_name}/czi_layers_nuc',
+            "cut_out_nuc": f'../afilament/temp/{confocal_dir_name}/actin_and_nucleus_layers',
+            "cut_out_channel": f'../afilament/temp/{confocal_dir_name}/actin_and_nucleus_layers',
+            "nucleous_xsection": f'../afilament/temp/{confocal_dir_name}/nucleus_layers',
+            "nucleous_xsection_unet": f'../afilament/temp/{confocal_dir_name}/nucleus_layers_unet',
+            "nucleus_mask": f'../afilament/temp/{confocal_dir_name}/nucleus_mask',
+            "actin_xsection": f'../afilament/temp/{confocal_dir_name}/actin_layers',
+            "actin_xsection_unet": f'../afilament/temp/{confocal_dir_name}/actin_layers_unet',
+            "actin_mask": f'../afilament/temp/{confocal_dir_name}/actin_mask',
+            "nucleus_top_mask": f'../afilament/temp/{confocal_dir_name}/nucleus_top_mask',
+            "nucleus_top_img": f'../afilament/temp/{confocal_dir_name}/nucleus_top_img',
+            "nuclei_top_masks": f'../afilament/temp/{confocal_dir_name}/nuclei_top_masks',
+        }
+
+        for folder in self.temp_folders.values():
+            Utils.prepare_folder(folder)
 
         for folder in self.output_data_folders.values():
             Utils.prepare_folder(folder)
 
-    def get_analysis_data_folders(self, output_analysis_path, output_verification_path):
+    def get_analysis_data_folders(self, output_analysis_path, output_verification_path, confocal_dir_name):
         output_data_folders = {
-            "area_ver": output_verification_path + "/nuc_area_verification",
-            "actin_stat": output_analysis_path + '/actin_stat',
-            "analysis": output_analysis_path + '/agg_stat',
-            "middle_xsection": output_verification_path + "/middle_xsection",
-            "rotatation_verification": output_verification_path + "/rotatation_verification",
+            "area_ver": f"{output_verification_path}/{confocal_dir_name}" + "/nuc_area_verification",
+            "actin_stat": f"{output_analysis_path}/{confocal_dir_name}"+ '/actin_stat',
+            "analysis": f"{output_analysis_path}/{confocal_dir_name}"+ '/agg_stat',
+            "middle_xsection": f"{output_verification_path}/{confocal_dir_name}"+ "/middle_xsection",
+            "rotatation_verification": f"{output_verification_path}/{confocal_dir_name}" + "/rotatation_verification",
         }
+
         return output_data_folders
 
 
@@ -94,12 +104,12 @@ class CellAnalyser(object):
         """
         Save nucleus area verificatin imagies. This function is helpful to verify different settings
         """
-        for folder in temp_folders.values():
+        for folder in self.temp_folders.values():
             Utils.prepare_folder(folder)
 
         reader = ConfocalImgReader(self.confocal_path, self.nucleus_channel, self.actin_channel, img_num)
-        reader.read(temp_folders["raw"], "whole")
-        Utils.get_nuclei_masks(temp_folders, self.output_data_folders,
+        reader.read(self.temp_folders["raw"], "whole")
+        Utils.get_nuclei_masks(self.temp_folders, self.output_data_folders,
                                reader.image_path, self.nuc_theshold, self.nuc_area_min_pixels_num,
                                self.find_biggest_mode, img_num, self.norm_th_nuc, self.unet_parm)
 
@@ -113,15 +123,15 @@ class CellAnalyser(object):
         self.total_img_number += 1
 
         # To be able visually to verify intermediate steps the program keeps transitional images and all statistic data in the temp folder.
-        for folder in temp_folders.values():
+        for folder in self.temp_folders.values():
             Utils.prepare_folder(folder)
 
         # Step 1: Read confocal microscope image, save images in png 8 bit. Since there are
         # computational power limitations our Unet works only with 8-bit images.
         reader = ConfocalImgReader(self.confocal_path, self.nucleus_channel, self.actin_channel, img_num)
         self.img_resolution = reader.img_resolution
-        reader.read(temp_folders["raw"], "whole")
-        nuclei_masks = Utils.get_nuclei_masks(temp_folders, self.output_data_folders,
+        reader.read(self.temp_folders["raw"], "whole")
+        nuclei_masks = Utils.get_nuclei_masks(self.temp_folders, self.output_data_folders,
                                               reader.image_path, self.nuc_theshold, self.nuc_area_min_pixels_num,
                                               self.find_biggest_mode, img_num, self.norm_th_nuc, self.unet_parm)
 
@@ -142,7 +152,7 @@ class CellAnalyser(object):
 
         return cells, Path(reader.image_path).name
 
-    def _run_analysis(self, cell, part, nucleus_mask, reader):
+    def _run_analysis(self, cell, part, nucleus_max_projection_mask, reader):
         """
         General logic of cell analysis step by step is represented by this method:
         Step 1: Read confocal microscope image, save images in png 8 bit.
@@ -166,36 +176,36 @@ class CellAnalyser(object):
 
         """
         # To be able visually to verify intermediate steps the program keeps transitional images and all statistic data in the temp folder.
-        for folder in temp_folders.values():
+        for folder in self.temp_folders.values():
             Utils.prepare_folder(folder)
 
         print(f"\n Analyse {part} fibers of the cell # {cell.number}")
         # Step 1: Read confocal microscope image, save images in png 8 bit. Since there are
         # computational power limitations our Unet works only with 8-bit images.
         self.img_resolution = reader.img_resolution
-        reader.read(temp_folders["raw"], part)
+        reader.read(self.temp_folders["raw"], part)
 
 
         print("\nGenerate xsection images...")
         # Step 2: Cut out this nucleus mask area from all image slices.
         if part == "whole":
-            Utils.сut_out_mask(nucleus_mask, temp_folders["raw"], temp_folders["cut_out_nuc"], 'nucleus')  # reconstruct nucleus based on "whole" cell
-        Utils.сut_out_mask(nucleus_mask, temp_folders["raw"], temp_folders["cut_out_nuc"], 'actin')
+            Utils.сut_out_mask(nucleus_max_projection_mask, self.temp_folders["raw"], self.temp_folders["cut_out_nuc"], 'nucleus')  # reconstruct nucleus based on "whole" cell
+        Utils.сut_out_mask(nucleus_max_projection_mask, self.temp_folders["raw"], self.temp_folders["cut_out_nuc"], 'actin')
 
         # Step 3: Find rotation angle and keep produced by rotation algorithm images (max_progection_img, hough_lines_img)
         # for further visual verification.
         # Finding the rotation angle for "whole" cell based on all layers, for "cap" on upper half, for "bottom" on lower "half"
         # Rotate mask, so area of interest can be catted again after rotation all layers.
-        rot_angle, max_progection_img, hough_lines_img = Utils.find_rotation_angle(temp_folders["cut_out_nuc"], self.norm_th_actin)
-        rotated_mask = Utils.rotate_bound(nucleus_mask, rot_angle)
+        rot_angle, max_progection_img, hough_lines_img = Utils.find_rotation_angle(self.temp_folders["cut_out_nuc"], self.norm_th_actin)
+        rotated_mask = Utils.rotate_bound(nucleus_max_projection_mask, rot_angle)
         rotated_cnt = Contour.get_mask_cnt(rotated_mask)
         rotated_cnt_extremes = Contour.get_cnt_extremes(rotated_cnt)
 
         # Step 4: Reconstruct the nucleus. Run reconstruction only for the "whole" cell.
         # For "cap" and "bottom" we need only fibers.
         if part == "whole":
-            cell.analyze_nucleus(rot_angle, rotated_cnt_extremes, temp_folders, self.unet_parm, self.img_resolution,
-                                 self.output_data_folders["analysis"], self.norm_th_nuc)
+            cell.analyze_nucleus(rot_angle, rotated_cnt_extremes, self.temp_folders, self.unet_parm, self.img_resolution,
+                                 self.output_data_folders["analysis"], self.norm_th_nuc, nucleus_max_projection_mask)
 
         # Step 5:  Reconstruct the specified area (whole/cap/bottom) of actin fibers:
         #  a. For "cap" and "bottom": rotate the whole nucleus again.
@@ -204,12 +214,12 @@ class CellAnalyser(object):
         #     We still need to run an analysis of all layers. It helps us not to cut fiber in the middle.
         #     But decide if fiber is "cap" or "bottom" based on the mean of z  of each individual fiber.
         if part == "cap" or part == "bottom":
-            Utils.prepare_folder(temp_folders["raw"])
-            Utils.prepare_folder(temp_folders["cut_out_nuc"])
-            reader.read(temp_folders["raw"], "whole")
-            Utils.сut_out_mask(nucleus_mask, temp_folders["raw"], temp_folders["cut_out_nuc"], 'actin')
+            Utils.prepare_folder(self.temp_folders["raw"])
+            Utils.prepare_folder(self.temp_folders["cut_out_nuc"])
+            reader.read(self.temp_folders["raw"], "whole")
+            Utils.сut_out_mask(nucleus_max_projection_mask, self.temp_folders["raw"], self.temp_folders["cut_out_nuc"], 'actin')
             length = (rotated_cnt_extremes.right[0] - rotated_cnt_extremes.left[0]) * self.img_resolution.x
-        rotated_max_projection, mid_cut_img = cell.analyze_actin_fibers(rot_angle, rotated_cnt_extremes, temp_folders,
+        rotated_max_projection, mid_cut_img = cell.analyze_actin_fibers(rot_angle, rotated_cnt_extremes, self.temp_folders,
                                                                         self.unet_parm, part, self.fiber_min_thr_microns,
                                                                         self.img_resolution, self.is_plot_fibers,
                                                                         self.is_connect_fibers, self.fiber_joint_angle,
@@ -218,7 +228,7 @@ class CellAnalyser(object):
         Utils.save_rotation_verification(cell, max_progection_img, hough_lines_img, rotated_max_projection, mid_cut_img,
                                          part, self.output_data_folders, self.unet_parm)
         reader.close()
-        return nucleus_mask
+        return nucleus_max_projection_mask
 
     def save_cells_data(self, cells, cap=False, bottom=False):
         """

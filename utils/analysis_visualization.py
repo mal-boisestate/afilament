@@ -242,7 +242,7 @@ if __name__ == '__main__':
     # afilament_folder_path = r"D:\BioLab\Current_experiments\afilament\2023.11.20_KASH_cell_for_paper\img_objects"
     # afilament_folder_path = r"C:\Users\nnina\Documents\BioLab_C\Current_experiments_C\2024.07.12_Actin_Tubulin_LIV_Control\AFILAMENT_output\Control\img_objects"
     afilament_folder_path = r"D:\BioLab\scr_2.0\afilament\img_objects"
-    image_index = 0
+    image_index = 2
     cell_index = 0
     min_fiber_thr_microns = 0.5
     node_actin_len_th = 2

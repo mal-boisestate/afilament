@@ -2,9 +2,8 @@ import cv2.cv2 as cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import copy
-from termcolor import colored, cprint
 
-from afilament.objects.SingleFiber import SingleFiber
+from objects.SingleFiber import SingleFiber
 
 reference_xsection_um = 40
 

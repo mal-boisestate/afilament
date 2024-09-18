@@ -15,11 +15,6 @@ def calculate_nucleus_parameters(nucleus_volume, b_ratio=0.80, c_ratio=0.65, cap
     b = b_ratio * a
     c = c_ratio * a
 
-    # Calculate the dimensions of the nucleus
-    x_nuc = 2 * a
-    y_nuc = 2 * b
-    z_nuc = 2 * c
-    nucleus_dimensions = [x_nuc, y_nuc, z_nuc]
 
     # Calculate the volume of the ellipsoid
     V_ellipsoid = (4/3) * np.pi * a * b * c
@@ -35,17 +30,13 @@ def calculate_nucleus_parameters(nucleus_volume, b_ratio=0.80, c_ratio=0.65, cap
     # Extract the height of the cap
     h = h_solution
 
-    return a, b, c, h, nucleus_dimensions
-
-# Example usage
-nucleus_volume = 894
+    return a, b, c, h
 
 # Calculate nucleus parameters
-a, b, c, h, nucleus_dimensions = calculate_nucleus_parameters(nucleus_volume)
+a, b, c, h = calculate_nucleus_parameters(977)
 
 # Display results
 print('Semi-major axis (a):', a)
 print('Semi-minor axis (b):', b)
 print('Semi-minor axis (c):', c)
 print('Height of the cap (h):', h)
-print('Nucleus dimensions (x, y, z):', nucleus_dimensions)

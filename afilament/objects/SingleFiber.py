@@ -3,7 +3,6 @@ import math
 
 import cv2.cv2 as cv2
 from statistics import mean, median
-from afilament.objects import Contour
 
 
 class SingleFiber(object):
