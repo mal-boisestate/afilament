@@ -1,7 +1,7 @@
 {
     "actin_channel": 1,
     "actin_unet_model": "../unet/models/actin_models_test_file/3_training_set_img_CP_epoch200_W20.pth",
-    "analysis_date_time": "2024-09-18 15:18:04",
+    "analysis_date_time": "2024-09-29 11:59:55",
     "cap_bottom_ratio": 0.4,
     "confocal_img": "Z:/Common/BMMB/LSM900 files/Uzer Lab/NN/Images/2024.08.09_Actin-Tubulin/Test_temp",
     "fiber_joint_angle": 10,
@@ -25,8 +25,8 @@
     "nucleus_unet_model": "../unet/models/CP_epoch200_nucleus_zeiss_plus_6cells_weight_correction_20.pth",
     "output_analysis_path": "../afilament/analysis_data",
     "output_verification_path": "../afilament/verification_data",
-    "total_cells_number": 1,
-    "total_img_number": 1,
+    "total_cells_number": 0,
+    "total_img_number": 0,
     "unet_model_scale": 1,
     "unet_model_thrh": 0.5
 }

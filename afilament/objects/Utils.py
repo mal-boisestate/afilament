@@ -1,8 +1,8 @@
 import glob
 import os
-import cv2.cv2 as cv2
+import cv2
 import math
-from afilament.objects import Contour
+from objects import Contour
 import numpy as np
 import matplotlib.pyplot as plt
 from unet.predict import run_predict_unet, run_predict_unet_one_img
