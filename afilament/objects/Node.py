@@ -270,47 +270,47 @@ def plot_branching_nodes(actin_fibers, nodes, min_fiber_thr_microns, resolution,
     actin_fibers_filtered = [fiber for fiber in actin_fibers.fibers_list if fiber.length >= min_fiber_thr_microns]
     branching_nodes = [node for node in nodes if len(node.actin_ids) > 1]
 
-    # ###################################CHANGES FOR MADISON FIGURES####################################
-    # #################THIS PART OF CODE CAN BE REMOVED AFTER#############################################
-    # # Set up figure with a transparent background
-    # fig = plt.figure()
-    # fig.patch.set_alpha(0.0)  # Set the transparency for the figure's background
-    # fig_ax = fig.add_subplot(111, projection='3d')
-    # fig_ax.patch.set_alpha(0.0)  # Set the transparency for the axes' background
-    #
-    # # Remove the gridlines and ticks
-    # fig_ax.grid(False)  # Turn off the gridlines
-    # fig_ax.xaxis._axinfo["grid"]['color'] = (0, 0, 0, 0)
-    # fig_ax.yaxis._axinfo["grid"]['color'] = (0, 0, 0, 0)
-    # fig_ax.zaxis._axinfo["grid"]['color'] = (0, 0, 0, 0)
-    #
-    # # Turn off the pane color to make it transparent as well
-    # fig_ax.xaxis.pane.fill = False
-    # fig_ax.yaxis.pane.fill = False
-    # fig_ax.zaxis.pane.fill = False
-    #
-    # # Optionally, you can also make the axis pane color transparent
-    # fig_ax.xaxis.pane.set_edgecolor('w')
-    # fig_ax.yaxis.pane.set_edgecolor('w')
-    # fig_ax.zaxis.pane.set_edgecolor('w')
-    #
-    # # Remove axis lines and ticks
-    # fig_ax.xaxis.line.set_visible(False)
-    # fig_ax.yaxis.line.set_visible(False)
-    # fig_ax.zaxis.line.set_visible(False)
-    # fig_ax.set_xticks([])
-    # fig_ax.set_yticks([])
-    # fig_ax.set_zticks([])
-    #
-    # ###################################################################
-
-    # Set up figure
+    ###################################CHANGES FOR MADISON FIGURES####################################
+    #################THIS PART OF CODE CAN BE REMOVED AFTER#############################################
+    # Set up figure with a transparent background
     fig = plt.figure()
+    fig.patch.set_alpha(0.0)  # Set the transparency for the figure's background
     fig_ax = fig.add_subplot(111, projection='3d')
+    fig_ax.patch.set_alpha(0.0)  # Set the transparency for the axes' background
+
+    # Remove the gridlines and ticks
+    fig_ax.grid(False)  # Turn off the gridlines
+    fig_ax.xaxis._axinfo["grid"]['color'] = (0, 0, 0, 0)
+    fig_ax.yaxis._axinfo["grid"]['color'] = (0, 0, 0, 0)
+    fig_ax.zaxis._axinfo["grid"]['color'] = (0, 0, 0, 0)
+
+    # Turn off the pane color to make it transparent as well
+    fig_ax.xaxis.pane.fill = False
+    fig_ax.yaxis.pane.fill = False
+    fig_ax.zaxis.pane.fill = False
+
+    # Optionally, you can also make the axis pane color transparent
+    fig_ax.xaxis.pane.set_edgecolor('w')
+    fig_ax.yaxis.pane.set_edgecolor('w')
+    fig_ax.zaxis.pane.set_edgecolor('w')
+
+    # Remove axis lines and ticks
+    fig_ax.xaxis.line.set_visible(False)
+    fig_ax.yaxis.line.set_visible(False)
+    fig_ax.zaxis.line.set_visible(False)
+    fig_ax.set_xticks([])
+    fig_ax.set_yticks([])
+    fig_ax.set_zticks([])
+
+    ###################################################################
+
+    # # Set up figure
+    # fig = plt.figure()
+    # fig_ax = fig.add_subplot(111, projection='3d')
 
     # Plot actin fibers and branching nodes
-    plot_green_actin_fibers(fig_ax) #Modified function for Madisons's figures
-    # plot_actin_fibers(fig_ax)
+    # plot_green_actin_fibers(fig_ax) #Modified function for Madisons's figures
+    plot_actin_fibers(fig_ax)
 
     # plot_branching_nodes(fig_ax)
 

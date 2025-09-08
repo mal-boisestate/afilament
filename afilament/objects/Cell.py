@@ -2,6 +2,7 @@ from objects.Nucleus import Nucleus
 from objects.Fibers import Fibers
 from objects import Node
 from objects.Parameters import TestStructure
+from objects.Utils import compute_parallelism_metrics
 import pickle
 import math
 
@@ -126,17 +127,19 @@ class Cell(object):
     def get_aggregated_cell_stat(self, is_separate_cap_bottom, fiber_min_thr_microns, resolution, node_actin_len_th):
         """
         [_, "Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre",
-        "Nucleus_width, micrometre", "Nucleus_high, micrometre",
+        "Nucleus_width, micrometre", "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre",
         "Nucleus_total_intensity", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num",
         "Total_fiber_volume, cubic_micrometre", "Cap_fiber_volume, cubic_micrometre",
         "Bottom_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",
          "Cap_fiber_length, micrometre", "Bottom_fiber_length, micrometre",
          "Fiber_intensity_whole", "Fiber_intensity_cap", "Fiber_intensity_bottom",
          "F-actin_signal_intensity_whole", "F-actin_signal_intensity_cap", "F-actin_signal_intensity_bottom",
-         "Branching_nodes_total, #", "Branching_nodes_cap, #", "Branching_nodes_bottom, #"]
+         "Branching_nodes_total, #", "Branching_nodes_cap, #", "Branching_nodes_bottom, #",
+         "GPC_total, #", "GPC_cap, #", "GPC_bottom, #""]
         """
 
         self.find_branching(fiber_min_thr_microns, node_actin_len_th)
+        parallel_threshold = 1 if fiber_min_thr_microns < 1 else fiber_min_thr_microns
 
         if is_separate_cap_bottom:
             self.actin_total.create_fibers_aggregated_stat(fiber_min_thr_microns, resolution)
@@ -146,8 +149,13 @@ class Cell(object):
             cap_branching_nodes = [node for node in self.cap_nodes if len(node.actin_ids) > 1]
             bottom_branching_nodes = [node for node in self.bottom_nodes if len(node.actin_ids) > 1]
 
+            self.actin_cap.gpc = compute_parallelism_metrics(self.actin_cap.fibers_list, angle_threshold=10, length_threshold=parallel_threshold)
+            self.actin_bottom.gpc = compute_parallelism_metrics(self.actin_bottom.fibers_list, angle_threshold=10, length_threshold=parallel_threshold)
+            self.actin_total.gpc = compute_parallelism_metrics(self.actin_total.fibers_list, angle_threshold=10, length_threshold=parallel_threshold)
+
+
             return [self.img_number, self.number, self.nucleus.nuc_volume, self.nucleus.nuc_length,
-                    self.nucleus.nuc_width, self.nucleus.nuc_high_alternative,
+                    self.nucleus.nuc_width, self.nucleus.nuc_high, self.nucleus.nuc_high_alternative,
                     self.nucleus.nuc_intensity,
                     self.actin_total.total_num, self.actin_cap.total_num, self.actin_bottom.total_num,
                     self.actin_total.total_volume, self.actin_cap.total_volume, self.actin_bottom.total_volume,
@@ -155,17 +163,22 @@ class Cell(object):
                     self.actin_total.intensity, self.actin_cap.intensity, self.actin_bottom.intensity,
                     self.actin_total.f_actin_signal_total_intensity, self.actin_cap.f_actin_signal_total_intensity,
                     self.actin_bottom.f_actin_signal_total_intensity,
-                    len(total_branching_nodes), len(cap_branching_nodes), len(bottom_branching_nodes)]
+                    len(total_branching_nodes), len(cap_branching_nodes), len(bottom_branching_nodes),
+                    self.actin_total.gpc, self.actin_cap.gpc, self.actin_bottom.gpc
+                    ]
         else:
             self.actin_total.create_fibers_aggregated_stat(fiber_min_thr_microns, resolution)
             total_branching_nodes = [node for node in self.total_nodes if len(node.actin_ids) > 1]
             actin_total_alternative_length = self.actin_total.get_alternative_length_test_k(fiber_min_thr_microns,
                                                                                             resolution, step=5)
+            self.actin_total.gpc = compute_parallelism_metrics(self.actin_total.fibers_list, angle_threshold=10, length_threshold=parallel_threshold)
+
             return [self.img_number, self.number, self.nucleus.nuc_volume, self.nucleus.nuc_length,
-                    self.nucleus.nuc_width, self.nucleus.nuc_high_alternative,
+                    self.nucleus.nuc_width, self.nucleus.nuc_high, self.nucleus.nuc_high_alternative,
                     self.nucleus.nuc_intensity, self.actin_total.total_num, self.actin_total.total_volume,
                     self.actin_total.total_length,
-                    self.actin_total.intensity, self.actin_total.f_actin_signal_total_intensity, len(total_branching_nodes)]
+                    self.actin_total.intensity, self.actin_total.f_actin_signal_total_intensity, len(total_branching_nodes),
+                    self.actin_total.gpc]
 
     def update_actin_stat_old_format(self, resolution):
         """
@@ -187,5 +200,20 @@ class Cell(object):
             if fiber_list is not None:
                 for fiber in fiber_list:
                     update_fiber_length_and_av_xsection(fiber, resolution)
+
+    def update_actin_stat_new_format(self, resolution, k=5):
+        def update_av_xsection(fiber):
+            if fiber.length == 0:
+                fiber.av_xsection = 0
+            else:
+                fiber.av_xsection = fiber.volume / fiber.length
+
+        for fiber_list in [getattr(self.actin_total, 'fibers_list', None),
+                           getattr(self.actin_cap, 'fibers_list', None),
+                           getattr(self.actin_bottom, 'fibers_list', None)]:
+            if fiber_list is not None:
+                for fiber in fiber_list:
+                    fiber.length = fiber.get_length_test_k(resolution, k) #Computes fiber length based only on x, y coordinates, ignoring z.
+                    update_av_xsection(fiber)
 
 

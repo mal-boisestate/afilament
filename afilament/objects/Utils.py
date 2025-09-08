@@ -2,6 +2,8 @@ import glob
 import os
 import cv2
 import math
+from sklearn.decomposition import PCA
+from sklearn.cluster import DBSCAN
 from objects import Contour
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,6 +20,54 @@ class FittedOval:
         self.major_axis = max(int(self.ellipse[1][0]), int(self.ellipse[1][1]))
         self.minor_axis = min(int(self.ellipse[1][0]), int(self.ellipse[1][1]))
 
+
+def compute_gpc(direction_vectors):
+    """
+    Computes the Global Parallelism Coefficient based on cosine similarity of direction vectors.
+    """
+    num_fibers = len(direction_vectors)
+    if num_fibers < 2:
+        return 1  # Perfect parallelism when only one fiber
+
+    dot_products = np.abs(np.dot(direction_vectors, direction_vectors.T))
+    np.fill_diagonal(dot_products, 0)  # Ignore self-comparison
+    mean_parallelism = np.sum(dot_products) / (num_fibers * (num_fibers - 1))
+    return mean_parallelism
+
+def fit_line_pca(points):
+    """
+    Fits a line to the given 2D points (x, y projection) using PCA and returns the principal direction vector.
+    """
+    pca = PCA(n_components=1)
+    pca.fit(points[:, :2])  # Use only x, y projection
+    return pca.components_[0]  # Principal direction vector
+
+def extract_fiber_directions(fibers_list, length_threshold=3):
+    """
+    Extracts the principal direction vector for fibers longer than length_threshold using PCA on x, y projection.
+    """
+    direction_vectors = []
+    for fiber in fibers_list:
+        if fiber.length >= length_threshold:
+            points = np.array(list(zip(fiber.xs, fiber.ys)))  # Extract 2D points (x, y)
+            if len(points) > 1:
+                direction_vector = fit_line_pca(points)  # Fit a line using PCA
+                direction_vectors.append(direction_vector)
+    return np.array(direction_vectors)
+
+def compute_parallelism_metrics(fibers_list, angle_threshold=10, length_threshold=3):
+    """
+    Computes the Global Parallelism Coefficient (GPC) and Dominant Parallel Cluster (DPC)
+    for fibers longer than length_threshold, using x, y projection.
+    """
+    direction_vectors = extract_fiber_directions(fibers_list, length_threshold)
+
+    if len(direction_vectors) < 2:
+        return {"GPC": 1.0}  # If only one fiber, it's perfectly parallel
+
+    gpc = compute_gpc(direction_vectors)
+
+    return gpc
 
 def prepare_folder(folder):
     """
@@ -454,6 +504,9 @@ def get_nuclei_masks(temp_folders, analysis_folder, image_path, nuc_theshold,
     elif find_biggest_mode == "trh":
         img_path = os.path.join(temp_folders["nucleus_top_img"], img_base_path + ".png")
         nucleus_img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+        #To-Do remove noise form the image using OpevCV
+        nucleus_img= cv2.GaussianBlur(nucleus_img, (5, 5), 0)
+
         cnts = Contour.get_img_cnts(nucleus_img, nuc_theshold)
         dim = nucleus_img.shape
 

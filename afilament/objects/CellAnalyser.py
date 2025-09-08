@@ -6,11 +6,11 @@ import logging
 from pathlib import Path
 from datetime import datetime
 
-from objects import Utils
-from objects.ConfocalImgReader import ConfocalImgReader
-from objects import Contour
-from objects.Cell import Cell
-from objects.Parameters import UnetParam
+from afilament.objects import Utils
+from afilament.objects.ConfocalImgReader import ConfocalImgReader
+from afilament.objects import Contour
+from afilament.objects.Cell import Cell
+from afilament.objects.Parameters import UnetParam
 
 
 class CellAnalyser(object):
@@ -238,7 +238,7 @@ class CellAnalyser(object):
             # This code block recalculates the length of the actin for the old format.
             # As per our decision for the LIV paper, we are aligning it with the method used in the KASH paper.
             # The formula used for calculating the old length is: old_len = (fiber.xs[-1] - fiber.xs[0]) * resolution.x
-            cell.update_actin_stat_old_format(self.img_resolution)
+            cell.update_actin_stat_new_format(self.img_resolution)
 
 
             # save actin fiber statistics
@@ -296,7 +296,7 @@ class CellAnalyser(object):
         if self.is_separate_cap_bottom:
             header_row = ["Image_name", "Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre",
                           "Nucleus_length, micrometre", "Nucleus_width, micrometre",
-                          "Nucleus_high, micrometre",
+                          "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre",
                           "Nucleus_total_intensity", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num",
                           "Total_fiber_volume, cubic_micrometre",
                           "Cap_fiber_volume, cubic_micrometre", "Bottom_fiber_volume, cubic_micrometre",
@@ -306,7 +306,8 @@ class CellAnalyser(object):
                           "Fiber_intensity_cap", "Fiber_intensity_bottom",
                           "F-actin_signal_intensity_whole",
                           "F-actin_signal_intensity_cap", "F-actin_signal_intensity_bottom",
-                          "Branching_nodes_total, #", "Branching_nodes_cap, #", "Branching_nodes_bottom, #"
+                          "Branching_nodes_total, #", "Branching_nodes_cap, #", "Branching_nodes_bottom, #",
+                          "GPC_total, #", "GPC_cap, #", "GPC_bottom, #"
                           ]
             path = os.path.join(self.output_data_folders["analysis"], 'aggregated_stat.csv')
             with open(path, mode='w') as stat_file:
@@ -321,10 +322,11 @@ class CellAnalyser(object):
                     ))
         else:
             header_row = ["Image_name","Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre",
-                          "Nucleus_width, micrometre", "Nucleus_high, micrometre",
+                          "Nucleus_width, micrometre", "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre",
                           "Nucleus_total_intensity", "Total_fiber_num",
                           "Total_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",
-                          "Fiber_intensity_whole", "F-actin_signal_intensity_whole", "Branching_nodes_total, #"]
+                          "Fiber_intensity_whole", "F-actin_signal_intensity_whole", "Branching_nodes_total, #",
+                          "GPC_total, #"]
             path = os.path.join(self.output_data_folders["analysis"], 'cell_stat.csv')
             with open(path, mode='w') as stat_file:
                 csv_writer = csv.writer(stat_file, delimiter=',')
@@ -350,8 +352,9 @@ class CellAnalyser(object):
         - "Nucleus_length, micrometre",
         - "Nucleus_width, micrometre",
         - "Nucleus_high, micrometre"
+        - "Nucleus_high_alternative, micrometre"
         - "Nucleus_total_intensity"
-        - "Total_fiber_num",
+        - "Total_fiber_num"
         - "Cap_fiber_num"
         - "Bottom_fiber_num",
         - "Total_fiber_volume, cubic_micrometre"
@@ -369,6 +372,9 @@ class CellAnalyser(object):
         - "Branching_nodes_total, #"
         - "Branching_nodes_cap, #"
         - "Branching_nodes_bottom, #"
+        - "GPC_total, #"
+        - "GPC_cap, #"
+        - "GPC_bottom, #"
         """
         for cell in cells:
             cell_stat_list.append([str(img_name)] + cell.get_aggregated_cell_stat(
@@ -413,7 +419,7 @@ class CellAnalyser(object):
         if self.is_separate_cap_bottom:
             header_row = ["Image_name", "Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre",
                           "Nucleus_length, micrometre", "Nucleus_width, micrometre",
-                          "Nucleus_high, micrometre",
+                          "Nucleus_high, micrometre", "Nucleus_high_alternative, micrometre",
                           "Nucleus_total_intensity", "Total_fiber_num", "Cap_fiber_num", "Bottom_fiber_num",
                           "Total_fiber_volume, cubic_micrometre",
                           "Cap_fiber_volume, cubic_micrometre", "Bottom_fiber_volume, cubic_micrometre",
@@ -422,15 +428,17 @@ class CellAnalyser(object):
                           "Fiber_intensity_cap", "Fiber_intensity_bottom",
                           "F-actin_signal_intensity_whole",
                           "F-actin_signal_intensity_cap", "F-actin_signal_intensity_bottom",
-                          "Branching_nodes_total, #", "Branching_nodes_cap, #", "Branching_nodes_bottom, #"
+                          "Branching_nodes_total, #", "Branching_nodes_cap, #", "Branching_nodes_bottom, #",
+                            "GPC_total, #", "GPC_cap, #", "GPC_bottom, #"
                           ]
 
         else:
             header_row = ["Image_name","Img_num", "Cell_num", "Nucleus_volume, cubic_micrometre", "Nucleus_length, micrometre",
                           "Nucleus_width, micrometre", "Nucleus_high, micrometre",
-                          "Nucleus_total_intensity", "Total_fiber_num",
+                          "Nucleus_high_alternative, micrometre", "Nucleus_total_intensity", "Total_fiber_num",
                           "Total_fiber_volume, cubic_micrometre", "Total_fiber_length, micrometre",
-                          "Fiber_intensity_whole", "F-actin_signal_intensity_whole", "Branching_nodes_total, #"]
+                          "Fiber_intensity_whole", "F-actin_signal_intensity_whole", "Branching_nodes_total, #",
+                          "GPC_total, #"]
 
         path = os.path.join(self.output_data_folders["analysis"], 'cell_stat.csv')
         with open(path, mode='w') as stat_file:

@@ -35,6 +35,7 @@ class Fibers(object):
         self.is_merged = False
         self.f_actin_signal_total_intensity = None
         self.current_fiber_min_thr_microns = 0
+        self.gpc = None
 
     def get_actin_cnt_objs(self, xsection_mask, xsection_img, x):
         cnts = cv2.findContours(xsection_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]

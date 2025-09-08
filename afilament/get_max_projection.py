@@ -6,22 +6,25 @@ import json
 import os
 import cv2.cv2 as cv2
 from types import SimpleNamespace
+import sys
 
-from afilament.objects.CellAnalyser import CellAnalyser
-from afilament.objects.CellAnalyser import Utils
-from afilament.objects.ConfocalImgReader import ConfocalImgReader
+sys.path.insert(0, '/')
+
+from objects.CellAnalyser import CellAnalyser
+from objects.CellAnalyser import Utils
+from objects.ConfocalImgReader import ConfocalImgReader
 
 def main():
     # Load JSON configuration file. This file can be produced by GUI in the future implementation
-    with open("../afilament/config.json", "r") as f:
+    with open("config.json", "r") as f:
         config = json.load(f, object_hook=lambda d: SimpleNamespace(**d))
 
-    img_nums = range(32)
+    img_nums = range(24)
 
     javabridge.start_vm(class_path=bioformats.JARS)
     analyser = CellAnalyser(config)
     start = time.time()
-    logging.basicConfig(filename='../afilament/myapp.log', level=logging.DEBUG,
+    logging.basicConfig(filename='myapp.log', level=logging.DEBUG,
                         format='%(asctime)s %(levelname)s %(name)s %(message)s')
     logger = logging.getLogger(__name__)
 

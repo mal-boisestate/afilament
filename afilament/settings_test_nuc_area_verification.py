@@ -5,20 +5,20 @@ import logging
 import json
 from types import SimpleNamespace
 
-from afilament.objects.CellAnalyser import CellAnalyser
+from objects.CellAnalyser import CellAnalyser
 
 def main():
     # Load JSON configuration file. This file can be produced by GUI in the future implementation
-    with open("../afilament/config.json", "r") as f:
+    with open("config.json", "r") as f:
         config = json.load(f, object_hook=lambda d: SimpleNamespace(**d))
 
-    img_nums = range(0, 34)
+    img_nums = range(0, 23)
     print(img_nums)
 
     javabridge.start_vm(class_path=bioformats.JARS)
     analyser = CellAnalyser(config)
     start = time.time()
-    logging.basicConfig(filename='../afilament/myapp.log', level=logging.DEBUG,
+    logging.basicConfig(filename='myapp.log', level=logging.DEBUG,
                         format='%(asctime)s %(levelname)s %(name)s %(message)s')
     logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 import numpy as np
 import math
 
-import cv2.cv2 as cv2
+import cv2
 from statistics import mean, median
 
 
@@ -169,39 +169,29 @@ class SingleFiber(object):
         return volume
 
     def get_length_test_k(self, resolution, k):
-
+        """
+        Computes fiber length based only on x, y coordinates, ignoring z.
+        """
         if self.n == 1:
             length = resolution.x
-
         else:
             last_i = 0
             length = 0
             for i in range(0, self.n - k, k):
-                point_1 = np.array([self.xs[i] * resolution.x,
-                                    self.ys[i] * resolution.y,
-                                    self.zs[i] * resolution.z])
-                point_2 = np.array([self.xs[i + k] * resolution.x,
-                                    self.ys[i + k] * resolution.y,
-                                    self.zs[i + k] * resolution.z])
-
+                point_1 = np.array([self.xs[i] * resolution.x, self.ys[i] * resolution.y])
+                point_2 = np.array([self.xs[i + k] * resolution.x, self.ys[i + k] * resolution.y])
                 distance = np.linalg.norm(point_2 - point_1)
                 length += distance
                 last_i = i + k
 
-            #Calculate the rest
-            point_1 = np.array([self.xs[last_i] * resolution.x,
-                                self.ys[last_i] * resolution.y,
-                                self.zs[last_i] * resolution.z])
-            point_2 = np.array([self.xs[self.n - 1] * resolution.x,
-                                self.ys[self.n - 1] * resolution.y,
-                                self.zs[self.n - 1] * resolution.z])
-
+            # Calculate the rest
+            point_1 = np.array([self.xs[last_i] * resolution.x, self.ys[last_i] * resolution.y])
+            point_2 = np.array([self.xs[self.n - 1] * resolution.x, self.ys[self.n - 1] * resolution.y])
             distance = np.linalg.norm(point_2 - point_1)
             length += distance
 
-
-
         return length
+
 
 
 

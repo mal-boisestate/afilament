@@ -5,7 +5,7 @@ from skimage import measure
 import pickle
 import pyvista as pv
 import pymeshfix as mf
-from afilament.objects.Node import plot_branching_nodes
+from objects.Node import plot_branching_nodes
 import csv
 
 # Define constants
@@ -206,7 +206,7 @@ def visualise_nucleus(afilament_folder_path, image_index, cell_index):
     # Create and show plot
     p = pv.Plotter()
     p.background_color = "white"
-    p.add_mesh(final_mesh, show_edges=True, color='#FFFFFF', edge_color='#00008B', label='Clipped')
+    p.add_mesh(final_mesh, show_edges=True, color='#0000FF', edge_color='#0000FF', label='Clipped')
     nuc_center = cell.nucleus.get_nucleus_origin()
 
     max_z = max(cell.nucleus.point_cloud, key=lambda item: item[2])[2]
@@ -242,12 +242,12 @@ if __name__ == '__main__':
     # afilament_folder_path = r"D:\BioLab\Current_experiments\afilament\2023.11.20_KASH_cell_for_paper\img_objects"
     # afilament_folder_path = r"C:\Users\nnina\Documents\BioLab_C\Current_experiments_C\2024.07.12_Actin_Tubulin_LIV_Control\AFILAMENT_output\Control\img_objects"
     afilament_folder_path = r"D:\BioLab\scr_2.0\afilament\img_objects"
-    image_index = 2
-    cell_index = 0
+    image_index = 0
+    cell_index = 4
     min_fiber_thr_microns = 0.5
-    node_actin_len_th = 2
+    node_actin_len_th = 0
     show_branching_nodes = True
-    structure = StructureOptions.CAP
+    structure = StructureOptions.TOTAL
     vis_mode = VisualizationModes.ACTIN
 
     if vis_mode not in VisualizationModes.__dict__.values():

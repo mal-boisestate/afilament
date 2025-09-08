@@ -11,11 +11,12 @@ import glob
 from types import SimpleNamespace
 from pathlib import Path
 
+sys.path.insert(0, 'D:\BioLab\scr_2.0')
+
 from objects.CellAnalyser import CellAnalyser
 from objects.Parameters import ImgResolution, CellsImg
 from objects import Utils
 
-sys.path.insert(0, 'D:\BioLab\scr_2.0')
 
 
 class JavaVM:
@@ -112,10 +113,10 @@ def main():
     aggregated_stat_list = []
 
 
-
     for file in os.listdir(config.imgs_objects):
         #add check if directory is empty and ask user to specify where get data
         img_path = Path(os.path.join(config.imgs_objects, file))
+
 
         #check if it is image file since in this folder we have config file
         if img_path.suffix == ".pickle":
